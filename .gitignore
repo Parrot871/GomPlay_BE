@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+# AWS EC2 Key
+*.pem
+gomplay-key.pem
