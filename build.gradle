@@ -40,7 +40,10 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
-
+jar {enabled = false}
+bootJar {
+    archiveFileName = 'app.jar'
+}
 tasks.named('test') {
     useJUnitPlatform()
 }
