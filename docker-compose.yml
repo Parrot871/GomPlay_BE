@@ -1,6 +1,6 @@
 services:
   gomplay:
-    image: ${DOCKER_USERNAME}/gomplay:latest
+    image: ${DOCKER_USERNAME}/gomplay-be:latest
     container_name: gomplay
     ports:
       - "8080:8080"
