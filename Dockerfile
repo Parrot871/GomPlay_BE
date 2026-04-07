@@ -1,5 +1,5 @@
 # --------------- 1) Build stage ---------
-FROM gradle:7.6-jdk17 AS builder
+FROM gradle:8.10-jdk17 AS builder
 WORKDIR /workspace
 COPY gradle gradle
 COPY gradlew .
