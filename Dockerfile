@@ -1,5 +1,5 @@
 # --------------- 1) Build stage ---------
-FROM gradle:8.10-jdk17 AS builder
+FROM gradle:8.14-jdk21 AS builder
 WORKDIR /workspace
 COPY gradle gradle
 COPY gradlew .
@@ -7,7 +7,7 @@ COPY settings.gradle build.gradle ./
 COPY . .
 RUN ./gradlew --no-daemon clean bootJar -x test
 # --------------- 2) Runtime stage ---------
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 RUN useradd -u 10001 appuser
 COPY --from=builder /workspace/build/libs/app.jar /app/app.jar
