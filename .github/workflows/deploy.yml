@@ -2,7 +2,7 @@ name: GomPlay CI/CD
 
 on:
   push:
-    branches: [ "main", "feature/docker-setup"]
+    branches: [ "main"]
 
 permissions:
   contents: read
