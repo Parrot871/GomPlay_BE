@@ -1,4 +1,4 @@
-package com.example.gomplay.config;
+package com.example.gomplay.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
