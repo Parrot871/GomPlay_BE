@@ -1,4 +1,4 @@
-package com.example.gomplay.domain.auth.Repository;
+package com.example.gomplay.domain.auth.repository;
 
 import com.example.gomplay.domain.auth.entity.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
