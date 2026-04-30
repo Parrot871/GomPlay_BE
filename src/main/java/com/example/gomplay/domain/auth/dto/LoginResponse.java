@@ -10,5 +10,5 @@ public class LoginResponse {
     private String refreshToken;
     private Long userId;
     private String name;
-    private final boolean isMatching = false;
+    private boolean isMatching = false;
 }

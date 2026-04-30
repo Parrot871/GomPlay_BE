@@ -45,4 +45,8 @@ public class AuthUser {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    public void verify() {
+        this.isVerified = true;
+    }
+
 }
