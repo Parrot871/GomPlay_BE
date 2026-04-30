@@ -40,6 +40,13 @@ public class AuthController {
         return ResponseEntity.ok(authService.reissueToken(request));
     }
 
+    // 인증코드 재전송
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerification(@RequestBody ResendVerificationRequest request) {
+        authService.resendVerificationEmail(request.getSchoolEmail());
+        return ResponseEntity.ok("인증 코드가 재전송되었습니다.");
+    }
+
     // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@AuthenticationPrincipal Long userId) {

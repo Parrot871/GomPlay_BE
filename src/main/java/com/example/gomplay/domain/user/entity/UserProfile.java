@@ -1,5 +1,6 @@
 package com.example.gomplay.domain.user.entity;
 
+import com.example.gomplay.domain.auth.entity.AuthUser;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,8 +21,9 @@ public class UserProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "auth_user_id", nullable = false, unique = true)
-    private Long authUserId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "auth_user_id", nullable = false, unique = true)
+    private AuthUser authUser;
 
     @Column(nullable = false)
     private String name;

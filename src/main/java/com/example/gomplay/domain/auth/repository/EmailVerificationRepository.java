@@ -1,5 +1,6 @@
 package com.example.gomplay.domain.auth.repository;
 
+import com.example.gomplay.domain.auth.entity.AuthUser;
 import com.example.gomplay.domain.auth.entity.EmailVerification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,4 +10,5 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
 
     Optional<EmailVerification> findByToken(String token);
     void deleteByAuthUser_Id(Long userId);
+    Optional<EmailVerification> findByAuthUser(AuthUser authUser);
 }

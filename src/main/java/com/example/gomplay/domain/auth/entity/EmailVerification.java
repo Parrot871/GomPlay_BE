@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "email_verification",
         indexes = {
-            @Index(name = "idx_email_verification_token", columnList = "token")
+                @Index(name = "idx_email_verification_token", columnList = "token")
         }
 )
 @Getter
@@ -34,8 +34,21 @@ public class EmailVerification {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    @Column
+    private String name;
+
+    @Column
+    private String studentId;
+
+    @Column
+    private String department;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    public void updateToken(String token, LocalDateTime expiresAt) {
+        this.token = token;
+        this.expiresAt = expiresAt;
+    }
 }

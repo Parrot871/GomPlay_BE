@@ -1,5 +1,6 @@
 package com.example.gomplay.domain.auth.entity;
 
+import com.example.gomplay.domain.user.entity.UserProfile;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -44,6 +45,9 @@ public class AuthUser {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "authUser", fetch = FetchType.LAZY)
+    private UserProfile userProfile;
 
     public void verify() {
         this.isVerified = true;
