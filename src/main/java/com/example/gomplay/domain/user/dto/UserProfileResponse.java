@@ -4,6 +4,7 @@ import com.example.gomplay.domain.user.entity.UserProfile;
 import lombok.Getter;
 import java.math.BigDecimal;
 
+
 @Getter
 public class UserProfileResponse {
     private Long id;
@@ -15,6 +16,9 @@ public class UserProfileResponse {
     private Integer noShowCount;
     private Integer pointBalance;
     private Integer matchCount;
+    private String exerciseTypes;  
+    private String difficulty;     
+    private String bio;           
 
     public UserProfileResponse(UserProfile userProfile) {
         this.id = userProfile.getId();
@@ -26,5 +30,8 @@ public class UserProfileResponse {
         this.noShowCount = userProfile.getNoShowCount();
         this.pointBalance = userProfile.getPointBalance();
         this.matchCount = userProfile.getMatchCount();
+        this.exerciseTypes = userProfile.getExerciseTypes();  
+        this.difficulty = userProfile.getDifficulty();        
+        this.bio = userProfile.getBio();
     }
 }
