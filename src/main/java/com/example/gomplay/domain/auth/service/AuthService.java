@@ -156,6 +156,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .tokenType("Bearer")
                 .userId(authUser.getId())
                 .isMatching(false)
                 .build();
@@ -192,6 +193,7 @@ public class AuthService {
         return LoginResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
+                .tokenType("Bearer")
                 .userId(authUser.getId())
                 .isMatching(false)
                 .build();
