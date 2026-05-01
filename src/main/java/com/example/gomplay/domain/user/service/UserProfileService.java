@@ -1,5 +1,9 @@
 package com.example.gomplay.domain.user.service;
 
+import com.example.gomplay.domain.auth.entity.AuthUser;
+import com.example.gomplay.domain.auth.repository.AuthUserRepository;
+import com.example.gomplay.domain.user.dto.PasswordUpdateRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.example.gomplay.domain.user.dto.UserProfileResponse;
 import com.example.gomplay.domain.user.dto.UserProfileUpdateRequest;
 import com.example.gomplay.domain.user.entity.UserProfile;
@@ -8,11 +12,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 @Service
 @RequiredArgsConstructor
 public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
+    private final AuthUserRepository authUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 프로필 조회
     @Transactional(readOnly = true)
@@ -38,4 +45,19 @@ public class UserProfileService {
 
         return new UserProfileResponse(userProfile);
     }
+
+    
+    @Transactional
+    public void updatePassword(Long userId, PasswordUpdateRequest request) {
+    AuthUser authUser = authUserRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+    if (!passwordEncoder.matches(request.getCurrentPassword(), authUser.getPasswordHash())) {
+        throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+    }
+
+    authUser.updatePassword(passwordEncoder.encode(request.getNewPassword()));
+}
+
+    
 }
