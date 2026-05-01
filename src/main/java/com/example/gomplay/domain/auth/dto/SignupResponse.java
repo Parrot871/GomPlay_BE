@@ -6,6 +6,5 @@ import lombok.Getter;
 @Getter
 @Builder
 public class SignupResponse {
-    private String message;
     private String email;
 }

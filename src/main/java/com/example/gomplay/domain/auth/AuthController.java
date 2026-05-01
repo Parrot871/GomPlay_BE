@@ -19,7 +19,7 @@ public class AuthController {
     // 회원가입 + 인증코드 발송
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다.", authService.signup(request)));
+        return ResponseEntity.ok(ApiResponse.success("인증코드가 발송되었습니다.", authService.signup(request)));
     }
 
     // 이메일 인증코드 확인
