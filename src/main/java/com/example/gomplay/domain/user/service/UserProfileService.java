@@ -32,7 +32,8 @@ public class UserProfileService {
                 request.getProfileImageUrl(),
                 request.getExerciseTypes(),
                 request.getDifficulty(),
-                request.getBio()
+                request.getBio(),
+                request.getTimetable() 
         );
 
         return new UserProfileResponse(userProfile);

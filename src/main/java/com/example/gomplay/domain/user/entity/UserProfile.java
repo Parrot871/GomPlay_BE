@@ -55,6 +55,18 @@ public class UserProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "exercise_types")
+    private String exerciseTypes; // 쉼표로 구분 (예: "축구,농구")
+
+    @Column(name = "difficulty")
+    private String difficulty; // 난이도
+
+    @Column(name = "bio")
+    private String bio; // 한 줄 소개
+
+    @Column(name = "timetable", columnDefinition = "TEXT")
+    private String timetable; // 시간표
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -69,5 +81,14 @@ public class UserProfile {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateProfile(String profileImageUrl, String exerciseTypes, 
+                           String difficulty, String bio, String timetable) {
+    if (profileImageUrl != null) this.profileImageUrl = profileImageUrl;
+    if (exerciseTypes != null) this.exerciseTypes = exerciseTypes;
+    if (difficulty != null) this.difficulty = difficulty;
+    if (bio != null) this.bio = bio;
+    if (timetable != null) this.timetable = timetable;
     }
 }
