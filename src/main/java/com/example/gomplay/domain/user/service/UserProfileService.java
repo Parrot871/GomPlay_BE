@@ -36,11 +36,7 @@ public class UserProfileService {
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
 
         userProfile.updateProfile(
-                request.getProfileImageUrl(),
-                request.getExerciseTypes(),
-                request.getDifficulty(),
-                request.getBio(),
-                request.getTimetable() 
+                request.getProfileImageUrl()
         );
 
         return new UserProfileResponse(userProfile);
