@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface UserSurveyExerciseRepository extends JpaRepository<UserSurveyExercise, Long> {
     List<UserSurveyExercise> findByUserProfile_Id(Long userId);
+    void deleteByUserProfile_Id(Long userId);
 }
