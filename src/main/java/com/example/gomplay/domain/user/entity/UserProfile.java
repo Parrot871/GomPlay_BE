@@ -64,6 +64,9 @@ public class UserProfile {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.profileImageUrl == null) {
+            this.profileImageUrl = "https://gomplay-storage.s3.ap-northeast-2.amazonaws.com/default_profile.png";
+        }
         if (this.mannerTemperature == null)
             this.mannerTemperature = new BigDecimal("36.5");
         if (this.noShowCount == null) this.noShowCount = 0;
