@@ -53,4 +53,8 @@ public class AuthUser {
         this.isVerified = true;
     }
 
+    public void updatePassword(String newPasswordHash) {
+    this.passwordHash = newPasswordHash;
+    }
+
 }
