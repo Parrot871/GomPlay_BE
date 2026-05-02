@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface UserScheduleRepository extends JpaRepository<UserSchedule, Long> {
     List<UserSchedule> findByUserProfile_Id(Long userId);
+    void deleteByUserProfile_Id(Long userId);
 }
