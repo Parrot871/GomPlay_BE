@@ -1,6 +1,6 @@
 package com.example.gomplay.domain.team.entity;
 
-import com.example.gomplay.domain.auth.entity.AuthUser;
+import com.example.gomplay.domain.user.entity.UserProfile;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -20,7 +20,7 @@ public class Gathering {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_id", nullable = false)
-    private AuthUser host;
+    private UserProfile host;
 
     @Column(nullable = false)
     private String title;
@@ -29,8 +29,7 @@ public class Gathering {
     private String sportType;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Difficulty difficulty;
+    private String difficulty;
 
     @Column(nullable = false)
     private String venue;
@@ -68,10 +67,6 @@ public class Gathering {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    public enum Difficulty {
-    입문자, 초보자, 중급자, 숙련자, 전문가
-    }
 
     public enum Status {
         OPEN, CLOSED, CANCELLED
