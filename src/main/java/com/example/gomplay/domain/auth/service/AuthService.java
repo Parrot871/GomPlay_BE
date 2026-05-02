@@ -66,7 +66,6 @@ public class AuthService {
         mailService.sendVerificationEmail(request.getSchoolEmail(), token);
 
         return SignupResponse.builder()
-                .message("인증 코드가 발송되었습니다.")
                 .email(request.getSchoolEmail())
                 .build();
     }
