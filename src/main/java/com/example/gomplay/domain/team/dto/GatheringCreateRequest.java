@@ -16,4 +16,7 @@ public class GatheringCreateRequest {
     private BigDecimal venueLng;
     private LocalDateTime scheduledAt;
     private Integer maxParticipants;
+    private String description;
+    private LocalDateTime scheduledEndAt;
+    private String tags;
 }
