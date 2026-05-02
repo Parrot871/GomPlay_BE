@@ -84,4 +84,22 @@ public class Gathering {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void update(String title, String sportType, String difficulty,
+                   String venue, BigDecimal venueLat, BigDecimal venueLng,
+                   LocalDateTime scheduledAt, LocalDateTime scheduledEndAt,
+                   Integer maxParticipants, String description, String tags, String status) {
+    if (title != null) this.title = title;
+    if (sportType != null) this.sportType = sportType;
+    if (difficulty != null) this.difficulty = difficulty;
+    if (venue != null) this.venue = venue;
+    if (venueLat != null) this.venueLat = venueLat;
+    if (venueLng != null) this.venueLng = venueLng;
+    if (scheduledAt != null) this.scheduledAt = scheduledAt;
+    if (scheduledEndAt != null) this.scheduledEndAt = scheduledEndAt;
+    if (maxParticipants != null) this.maxParticipants = maxParticipants;
+    if (description != null) this.description = description;
+    if (tags != null) this.tags = tags;
+    if (status != null) this.status = Status.valueOf(status);
+    }
 }
