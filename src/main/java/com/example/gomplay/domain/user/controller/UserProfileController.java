@@ -3,6 +3,7 @@ package com.example.gomplay.domain.user.controller;
 import com.example.gomplay.domain.user.dto.PasswordUpdateRequest;
 import com.example.gomplay.domain.user.dto.UserProfileResponse;
 import com.example.gomplay.domain.user.dto.UserProfileUpdateRequest;
+import com.example.gomplay.domain.user.dto.UserProfileUpdateResponse;
 import com.example.gomplay.domain.user.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class UserProfileController {
 
     // 프로필 수정
     @PatchMapping("/me/profile")
-    public ResponseEntity<UserProfileResponse> updateProfile(
+    public ResponseEntity<UserProfileUpdateResponse> updateProfile(
             @AuthenticationPrincipal Long userId,
             @RequestBody UserProfileUpdateRequest request) {
         return ResponseEntity.ok(userProfileService.updateProfile(userId, request));
