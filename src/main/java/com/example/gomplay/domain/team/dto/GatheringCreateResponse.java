@@ -24,7 +24,7 @@ public class GatheringCreateResponse {
         this.id = gathering.getId();
         this.title = gathering.getTitle();
         this.sportType = gathering.getSportType();
-        this.difficulty = gathering.getDifficulty().name();
+        this.difficulty = gathering.getDifficulty();
         this.venue = gathering.getVenue();
         this.scheduledAt = gathering.getScheduledAt();
         this.maxParticipants = gathering.getMaxParticipants();
