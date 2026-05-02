@@ -50,6 +50,15 @@ public class Gathering {
     @Column(name = "current_participants", nullable = false)
     private Integer currentParticipants;
 
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "scheduled_end_at")
+    private LocalDateTime scheduledEndAt;
+
+    @Column(name = "tags")
+    private String tags;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
@@ -61,7 +70,7 @@ public class Gathering {
     private LocalDateTime updatedAt;
 
     public enum Difficulty {
-        초급, 중급, 고급
+    입문자, 초보자, 중급자, 숙련자, 전문가
     }
 
     public enum Status {

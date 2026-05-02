@@ -16,6 +16,9 @@ public class GatheringCreateResponse {
     private Integer currentParticipants;
     private String status;
     private LocalDateTime createdAt;
+    private String description;
+    private LocalDateTime scheduledEndAt;
+    private String tags;
 
     public GatheringCreateResponse(Gathering gathering) {
         this.id = gathering.getId();
