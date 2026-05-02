@@ -55,22 +55,18 @@ public class UserProfile {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "exercise_types")
-    private String exerciseTypes; // 쉼표로 구분 (예: "축구,농구")
+    @Column(name = "is_matching", nullable = false)
+    private boolean isMatching = false;
 
-    @Column(name = "difficulty")
-    private String difficulty; // 난이도
 
-    @Column(name = "bio")
-    private String bio; // 한 줄 소개
-
-    @Column(name = "timetable", columnDefinition = "TEXT")
-    private String timetable; // 시간표
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        if (this.profileImageUrl == null) {
+            this.profileImageUrl = "https://gomplay-storage.s3.ap-northeast-2.amazonaws.com/default_profile.png";
+        }
         if (this.mannerTemperature == null)
             this.mannerTemperature = new BigDecimal("36.5");
         if (this.noShowCount == null) this.noShowCount = 0;
@@ -83,12 +79,7 @@ public class UserProfile {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateProfile(String profileImageUrl, String exerciseTypes, 
-                           String difficulty, String bio, String timetable) {
+    public void updateProfile(String profileImageUrl) {
     if (profileImageUrl != null) this.profileImageUrl = profileImageUrl;
-    if (exerciseTypes != null) this.exerciseTypes = exerciseTypes;
-    if (difficulty != null) this.difficulty = difficulty;
-    if (bio != null) this.bio = bio;
-    if (timetable != null) this.timetable = timetable;
     }
 }
