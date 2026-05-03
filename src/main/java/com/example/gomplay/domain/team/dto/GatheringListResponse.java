@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Getter
 public class GatheringListResponse {
     private Long id;
+    private Long hostId;
     private String title;
     private String sportType;
     private String difficulty;
@@ -23,6 +24,7 @@ public class GatheringListResponse {
 
     public GatheringListResponse(Gathering gathering) {
         this.id = gathering.getId();
+        this.hostId = gathering.getHost().getId();
         this.title = gathering.getTitle();
         this.sportType = gathering.getSportType();
         this.difficulty = gathering.getDifficulty();
