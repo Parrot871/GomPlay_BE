@@ -6,5 +6,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class MatchingToggleRequest {
-    private boolean isMatching;
+    private Boolean isMatching;
+    public Boolean isMatching() {
+        return isMatching;
+    }
 }

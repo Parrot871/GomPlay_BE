@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MatchingToggleResponse {
-    private boolean isMatching;
+    private Boolean isMatching;
     private String message;
 }

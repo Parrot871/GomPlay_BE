@@ -17,7 +17,7 @@ public class QuickMatchService {
     private final QuickMatchLogRepository quickMatchLogRepository;
 
     @Transactional
-    public MatchingToggleResponse updateMatchingStatus(Long userId, boolean isMatching) {
+    public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
         UserProfile userProfile = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
 
