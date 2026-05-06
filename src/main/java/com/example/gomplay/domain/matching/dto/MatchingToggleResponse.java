@@ -11,5 +11,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchingToggleResponse {
     private Boolean isMatching;
-    private String message;
 }
