@@ -1,4 +1,4 @@
 package com.example.gomplay.domain.matching;
 
-public class MatchingController {
+public class QuickMatchController {
 }
