@@ -27,13 +27,14 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)  // JWT 쓰니까 세션 안 씀
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()  // 회원가입, 로그인
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/gathering/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/user/**").permitAll()
+                .requestMatchers("/api/gathering/**").permitAll()  
+                .requestMatchers("/error").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
