@@ -12,6 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.gomplay.global.s3.S3Service;
+import com.example.gomplay.domain.user.dto.ProfileImageResponse;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +25,7 @@ public class UserProfileService {
     private final UserProfileRepository userProfileRepository;
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final S3Service s3Service;
 
     // 프로필 조회
     @Transactional(readOnly = true)
@@ -52,4 +58,15 @@ public class UserProfileService {
 
         authUser.updatePassword(passwordEncoder.encode(request.getNewPassword()));
     }
+
+    @Transactional
+    public ProfileImageResponse uploadProfileImage(Long userId, MultipartFile file) throws IOException {
+    UserProfile userProfile = userProfileRepository.findByAuthUser_Id(userId)
+            .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
+
+    String imageUrl = s3Service.uploadFile(file);
+    userProfile.updateProfile(imageUrl);
+
+    return new ProfileImageResponse(imageUrl);
+}
 }
