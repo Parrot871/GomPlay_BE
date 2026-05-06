@@ -34,7 +34,6 @@ public class QuickMatchService {
         String message = isMatching ? "매칭 대기 중입니다." : "매칭이 종료되었습니다.";
         return MatchingToggleResponse.builder()
                 .isMatching(isMatching)
-                .message(message)
                 .build();
     }
 }
