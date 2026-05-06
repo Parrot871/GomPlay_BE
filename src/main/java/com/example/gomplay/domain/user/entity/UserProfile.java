@@ -82,4 +82,8 @@ public class UserProfile {
     public void updateProfile(String profileImageUrl) {
     if (profileImageUrl != null) this.profileImageUrl = profileImageUrl;
     }
+
+    public void updateMatchingStatus(boolean isMatching) {
+        this.isMatching = isMatching;
+    }
 }
