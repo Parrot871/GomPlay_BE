@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.gomplay.domain.user.dto.ProfileImageResponse;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,4 +44,11 @@ public class UserProfileController {
         userProfileService.updatePassword(userId, request);
         return ResponseEntity.ok("비밀번호가 변경되었습니다.");
     }
+
+    @PostMapping("/me/profile-image")
+    public ResponseEntity<ProfileImageResponse> uploadProfileImage(
+        @AuthenticationPrincipal Long userId,
+        @RequestParam("file") MultipartFile file) throws IOException {
+    return ResponseEntity.ok(userProfileService.uploadProfileImage(userId, file));
+}
 }
