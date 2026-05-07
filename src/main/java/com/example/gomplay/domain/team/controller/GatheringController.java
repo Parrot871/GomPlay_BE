@@ -13,8 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.example.gomplay.domain.team.dto.GatheringListResponse;
+import com.example.gomplay.domain.team.dto.GatheringParticipantResponse;
+
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -68,4 +69,20 @@ public class GatheringController {
         @RequestParam(defaultValue = "10") int size) {
     return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, page, size));
     }
+
+    @PatchMapping("/{gatheringId}/participants/{participantId}/accept")
+public ResponseEntity<GatheringParticipantResponse> acceptParticipant(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId,
+        @PathVariable Long participantId) {
+    return ResponseEntity.ok(gatheringService.acceptParticipant(userId, gatheringId, participantId));
+}
+
+    @PatchMapping("/{gatheringId}/participants/{participantId}/reject")
+public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId,
+        @PathVariable Long participantId) {
+    return ResponseEntity.ok(gatheringService.rejectParticipant(userId, gatheringId, participantId));
+}
 }
