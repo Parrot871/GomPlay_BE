@@ -51,4 +51,20 @@ public class QuickMatchController {
                 quickMatchService.requestMatch(userId, request)
         ));
     }
+
+    @PatchMapping("/request/{id}/accept")
+    public ResponseEntity<ApiResponse<Void>> acceptMatch(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id) {
+        quickMatchService.acceptMatch(userId, id);
+        return ResponseEntity.ok(ApiResponse.success("매칭이 수락되었습니다.", null));
+    }
+
+    @PatchMapping("/request/{id}/reject")
+    public ResponseEntity<ApiResponse<Void>> rejectMatch(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id) {
+        quickMatchService.rejectMatch(userId, id);
+        return ResponseEntity.ok(ApiResponse.success("매칭이 거절되었습니다.", null));
+    }
 }
