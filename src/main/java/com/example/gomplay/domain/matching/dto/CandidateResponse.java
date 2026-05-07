@@ -23,6 +23,7 @@ public class CandidateResponse {
     private String studentId;
     private String partnerStyle;
     private String exerciseIntensity;
+    private String exerciseReason;
     private List<String> exerciseTypes;
 
     public static CandidateResponse of(UserProfile profile, UserSurvey survey, List<UserSurveyExercise> exercises) {
@@ -34,6 +35,7 @@ public class CandidateResponse {
                 .studentId(profile.getStudentId())
                 .partnerStyle(survey != null ? survey.getPartnerStyle().name() : null)
                 .exerciseIntensity(survey != null ? survey.getExerciseIntensity().name() : null)
+                .exerciseReason(survey != null ? survey.getExerciseReason().name() : null)
                 .exerciseTypes(exercises.stream()
                         .map(e -> e.getExerciseType().name())
                         .collect(Collectors.toList()))
