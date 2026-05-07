@@ -13,6 +13,7 @@ import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import com.example.gomplay.domain.team.dto.GatheringJoinResponse;
 import com.example.gomplay.domain.team.dto.GatheringListResponse;
+import com.example.gomplay.domain.team.dto.GatheringParticipantResponse;
 import com.example.gomplay.domain.team.entity.GatheringParticipant;
 import com.example.gomplay.domain.team.repository.GatheringParticipantRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
+import com.example.gomplay.domain.team.dto.GatheringParticipantResponse;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -157,6 +160,48 @@ public class GatheringService {
                 .map(GatheringListResponse::new);
     }
     }
+
+    @Transactional
+public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
+    UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+    Gathering gathering = gatheringRepository.findById(gatheringId)
+            .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+    if (!gathering.getHost().getId().equals(host.getId())) {
+        throw new IllegalArgumentException("모집글 작성자만 수락할 수 있습니다.");
+    }
+
+    GatheringParticipant participant = gatheringParticipantRepository
+            .findByIdAndGathering_Id(participantId, gatheringId)
+            .orElseThrow(() -> new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
+
+    participant.updateStatus(GatheringParticipant.Status.ACCEPTED);
+
+    return new GatheringParticipantResponse(participant);
+}
+
+@Transactional
+public GatheringParticipantResponse rejectParticipant(Long userId, Long gatheringId, Long participantId) {
+    UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+    Gathering gathering = gatheringRepository.findById(gatheringId)
+            .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+    if (!gathering.getHost().getId().equals(host.getId())) {
+        throw new IllegalArgumentException("모집글 작성자만 거절할 수 있습니다.");
+    }
+
+    GatheringParticipant participant = gatheringParticipantRepository
+            .findByIdAndGathering_Id(participantId, gatheringId)
+            .orElseThrow(() -> new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
+
+    participant.updateStatus(GatheringParticipant.Status.REJECTED);
+
+    return new GatheringParticipantResponse(participant);
+}
 
     
 }
