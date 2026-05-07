@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface MatchRequestRepository extends JpaRepository<MatchRequest, Long> {
 
     // 상대방한테 이미 PENDING 요청이 있는지 확인
-    Optional<MatchRequest> findByRequesterIdAndOpponentIdAndStatus(
+    Optional<MatchRequest> findByRequester_IdAndOpponent_IdAndStatus(
             Long requesterId, Long opponentId, MatchRequest.MatchRequestStatus status
     );
 }
