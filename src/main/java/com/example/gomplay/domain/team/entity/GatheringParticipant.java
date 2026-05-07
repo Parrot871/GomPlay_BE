@@ -50,4 +50,8 @@ public class GatheringParticipant {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void updateStatus(Status status) {
+    this.status = status;
+    }
 }
