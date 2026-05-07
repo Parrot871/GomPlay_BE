@@ -1,8 +1,12 @@
 package com.example.gomplay.domain.matching.service;
 
 import com.example.gomplay.domain.matching.dto.CandidateResponse;
+import com.example.gomplay.domain.matching.dto.MatchRequestDto;
+import com.example.gomplay.domain.matching.dto.MatchRequestResponse;
 import com.example.gomplay.domain.matching.dto.MatchingToggleResponse;
+import com.example.gomplay.domain.matching.entity.MatchRequest;
 import com.example.gomplay.domain.matching.entity.QuickMatchLog;
+import com.example.gomplay.domain.matching.repository.MatchRequestRepository;
 import com.example.gomplay.domain.matching.repository.QuickMatchLogRepository;
 import com.example.gomplay.domain.survey.entity.UserSurvey;
 import com.example.gomplay.domain.survey.entity.UserSurveyExercise;
@@ -25,6 +29,7 @@ public class QuickMatchService {
     private final QuickMatchLogRepository quickMatchLogRepository;
     private final UserSurveyRepository userSurveyRepository;
     private final UserSurveyExerciseRepository userSurveyExerciseRepository;
+    private final MatchRequestRepository matchRequestRepository;
 
     @Transactional
     public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
@@ -66,5 +71,29 @@ public class QuickMatchService {
                     return CandidateResponse.of(profile, survey, exercises);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public MatchRequestResponse requestMatch(Long userId, MatchRequestDto request) {
+        UserProfile requester = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
+
+        UserProfile opponent = userProfileRepository.findById(request.getOpponentId())
+                .orElseThrow(() -> new IllegalArgumentException("상대방을 찾을 수 없습니다."));
+
+        // 이미 PENDING 요청이 있는지 확인
+        matchRequestRepository.findByRequester_IdAndOpponent_IdAndStatus(
+                        requester.getId(), opponent.getId(), MatchRequest.MatchRequestStatus.PENDING)
+                .ifPresent(m -> { throw new IllegalArgumentException("이미 요청 중입니다."); });
+
+        MatchRequest matchRequest = MatchRequest.create(requester, opponent);
+        matchRequestRepository.save(matchRequest);
+
+        return MatchRequestResponse.builder()
+                .matchRequestId(matchRequest.getId())
+                .opponentId(opponent.getId())
+                .status(matchRequest.getStatus().name())
+                .expiresAt(matchRequest.getExpiresAt())
+                .build();
     }
 }
