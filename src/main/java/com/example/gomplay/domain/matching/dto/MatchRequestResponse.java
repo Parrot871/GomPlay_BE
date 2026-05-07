@@ -1,0 +1,19 @@
+package com.example.gomplay.domain.matching.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class MatchRequestResponse {
+    private Long matchRequestId;
+    private Long opponentId;
+    private String status;
+    private LocalDateTime expiresAt;
+}
