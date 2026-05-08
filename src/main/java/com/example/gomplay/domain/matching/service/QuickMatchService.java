@@ -64,12 +64,13 @@ public class QuickMatchService {
         UserProfile me = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
 
-        // WAITING 상태인 유저들 조회 (본인 제외)
         List<QuickMatchLog> waitingLogs = quickMatchLogRepository.findByStatus(QuickMatchLog.MatchStatus.WAITING);
 
         return waitingLogs.stream()
-                .map(log -> log.getUserProfile())
-                .filter(profile -> !profile.getId().equals(me.getId()))
+                .map(QuickMatchLog::getUserProfile)
+                .filter(profile -> !profile.getId().equals(me.getId())) // 본인 제외
+                .filter(UserProfile::isMatching) // is_matching = 1인 것만
+                .distinct() // 중복 제거
                 .map(profile -> {
                     UserSurvey survey = userSurveyRepository
                             .findByUserProfile_Id(profile.getId())
