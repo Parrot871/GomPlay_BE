@@ -31,10 +31,17 @@ public class QuickMatchService {
     private final UserSurveyExerciseRepository userSurveyExerciseRepository;
     private final MatchRequestRepository matchRequestRepository;
 
+    // QuickMatchService.java
     @Transactional
     public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
-        UserProfile userProfile = userProfileRepository.findByAuthUser_Id(userId)
+        // Lock이 걸린 조회 사용
+        UserProfile userProfile = userProfileRepository.findByAuthUserIdWithLock(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
+
+        // 현재 상태와 요청 상태가 같으면 굳이 DB를 또 찌를 필요 없이 바로 리턴 (최적화 방어)
+        if (userProfile.isMatching() == isMatching) {
+            return MatchingToggleResponse.builder().isMatching(isMatching).build();
+        }
 
         userProfile.updateMatchingStatus(isMatching);
 
