@@ -11,4 +11,7 @@ public interface QuickMatchLogRepository extends JpaRepository<QuickMatchLog, Lo
             Long userProfileId, QuickMatchLog.MatchStatus status
     );
     List<QuickMatchLog> findByStatus(QuickMatchLog.MatchStatus status);
+    List<QuickMatchLog> findAllByUserProfileIdAndStatus(
+            Long userProfileId, QuickMatchLog.MatchStatus status
+    );
 }

@@ -39,14 +39,22 @@ public class QuickMatchService {
         userProfile.updateMatchingStatus(isMatching);
 
         if (isMatching) {
-            quickMatchLogRepository.save(QuickMatchLog.createWaiting(userProfile));
-        } else {
-            quickMatchLogRepository.findTopByUserProfileIdAndStatus(
+            // 이미 WAITING이 있으면 INSERT 안 함
+            boolean alreadyWaiting = quickMatchLogRepository
+                    .findTopByUserProfileIdAndStatus(
                             userProfile.getId(), QuickMatchLog.MatchStatus.WAITING)
-                    .ifPresent(QuickMatchLog::cancel);
+                    .isPresent();
+
+            if (!alreadyWaiting) {
+                quickMatchLogRepository.save(QuickMatchLog.createWaiting(userProfile));
+            }
+        } else {
+            // WAITING 전부 CANCELLED로 변경
+            quickMatchLogRepository.findAllByUserProfileIdAndStatus(
+                            userProfile.getId(), QuickMatchLog.MatchStatus.WAITING)
+                    .forEach(QuickMatchLog::cancel);
         }
 
-        String message = isMatching ? "매칭 대기 중입니다." : "매칭이 종료되었습니다.";
         return MatchingToggleResponse.builder()
                 .isMatching(isMatching)
                 .build();
