@@ -42,4 +42,8 @@ public class QuickMatchLog {
     public void cancel() {
         this.status = MatchStatus.CANCELLED;
     }
+
+    public void updateStatus(MatchStatus status) {
+        this.status = status;
+    }
 }
