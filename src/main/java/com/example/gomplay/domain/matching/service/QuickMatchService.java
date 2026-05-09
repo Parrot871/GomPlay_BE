@@ -14,7 +14,10 @@ import com.example.gomplay.domain.survey.repository.UserSurveyExerciseRepository
 import com.example.gomplay.domain.survey.repository.UserSurveyRepository;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
+import com.example.gomplay.global.websocket.WebSocketSessionRegistry;
+import com.example.gomplay.global.websocket.dto.WsMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +33,14 @@ public class QuickMatchService {
     private final UserSurveyRepository userSurveyRepository;
     private final UserSurveyExerciseRepository userSurveyExerciseRepository;
     private final MatchRequestRepository matchRequestRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final WebSocketSessionRegistry sessionRegistry;
 
-    // QuickMatchService.java
     @Transactional
     public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
-        // Lock이 걸린 조회 사용
         UserProfile userProfile = userProfileRepository.findByAuthUserIdWithLock(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
 
-        // 현재 상태와 요청 상태가 같으면 굳이 DB를 또 찌를 필요 없이 바로 리턴 (최적화 방어)
         if (userProfile.isMatching() == isMatching) {
             return MatchingToggleResponse.builder().isMatching(isMatching).build();
         }
@@ -46,7 +48,6 @@ public class QuickMatchService {
         userProfile.updateMatchingStatus(isMatching);
 
         if (isMatching) {
-            // 이미 WAITING이 있으면 INSERT 안 함
             boolean alreadyWaiting = quickMatchLogRepository
                     .findTopByUserProfileIdAndStatus(
                             userProfile.getId(), QuickMatchLog.MatchStatus.WAITING)
@@ -55,38 +56,48 @@ public class QuickMatchService {
             if (!alreadyWaiting) {
                 quickMatchLogRepository.save(QuickMatchLog.createWaiting(userProfile));
             }
+
+            // waiting 풀에 추가
+            sessionRegistry.addToWaiting(userProfile.getId());
+
+            // 나한테 현재 후보 목록 푸시
+            List<CandidateResponse> candidates = buildCandidates(userProfile);
+            messagingTemplate.convertAndSendToUser(
+                    userProfile.getId().toString(),
+                    "/queue/match",
+                    WsMessage.builder().type("CANDIDATES_UPDATE").data(candidates).build()
+            );
+
+            // 기존 waiting 유저들한테 내 정보 푸시
+            CandidateResponse myInfo = buildCandidate(userProfile);
+            sessionRegistry.getWaitingPool().stream()
+                    .filter(id -> !id.equals(userProfile.getId()))
+                    .forEach(waitingProfileId ->
+                            messagingTemplate.convertAndSendToUser(
+                                    waitingProfileId.toString(),
+                                    "/queue/match",
+                                    WsMessage.builder().type("NEW_CANDIDATE").data(myInfo).build()
+                            )
+                    );
         } else {
-            // WAITING 전부 CANCELLED로 변경
             quickMatchLogRepository.findAllByUserProfileIdAndStatus(
                             userProfile.getId(), QuickMatchLog.MatchStatus.WAITING)
                     .forEach(QuickMatchLog::cancel);
+
+            // waiting 풀에서 제거
+            sessionRegistry.removeFromWaiting(userProfile.getId());
+
+            // 기존 waiting 유저들한테 내가 빠졌다고 푸시
+            sessionRegistry.getWaitingPool().forEach(waitingProfileId ->
+                    messagingTemplate.convertAndSendToUser(
+                            waitingProfileId.toString(),
+                            "/queue/match",
+                            WsMessage.builder().type("CANDIDATE_LEFT").data(userProfile.getId()).build()
+                    )
+            );
         }
 
-        return MatchingToggleResponse.builder()
-                .isMatching(isMatching)
-                .build();
-    }
-    @Transactional(readOnly = true)
-    public List<CandidateResponse> getCandidates(Long userId) {
-        UserProfile me = userProfileRepository.findByAuthUser_Id(userId)
-                .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
-
-        List<QuickMatchLog> waitingLogs = quickMatchLogRepository.findByStatus(QuickMatchLog.MatchStatus.WAITING);
-
-        return waitingLogs.stream()
-                .map(QuickMatchLog::getUserProfile)
-                .filter(profile -> !profile.getId().equals(me.getId())) // 본인 제외
-                .filter(UserProfile::isMatching) // is_matching = 1인 것만
-                .distinct() // 중복 제거
-                .map(profile -> {
-                    UserSurvey survey = userSurveyRepository
-                            .findByUserProfile_Id(profile.getId())
-                            .orElse(null);
-                    List<UserSurveyExercise> exercises = userSurveyExerciseRepository
-                            .findByUserProfile_Id(profile.getId());
-                    return CandidateResponse.of(profile, survey, exercises);
-                })
-                .collect(Collectors.toList());
+        return MatchingToggleResponse.builder().isMatching(isMatching).build();
     }
 
     @Transactional
@@ -97,7 +108,6 @@ public class QuickMatchService {
         UserProfile opponent = userProfileRepository.findById(request.getOpponentId())
                 .orElseThrow(() -> new IllegalArgumentException("상대방을 찾을 수 없습니다."));
 
-        // 이미 PENDING 요청이 있는지 확인
         matchRequestRepository.findByRequester_IdAndOpponent_IdAndStatus(
                         requester.getId(), opponent.getId(), MatchRequest.MatchRequestStatus.PENDING)
                 .ifPresent(m -> { throw new IllegalArgumentException("이미 요청 중입니다."); });
@@ -105,50 +115,48 @@ public class QuickMatchService {
         MatchRequest matchRequest = MatchRequest.create(requester, opponent);
         matchRequestRepository.save(matchRequest);
 
-        return MatchRequestResponse.builder()
+        MatchRequestResponse response = MatchRequestResponse.builder()
                 .matchRequestId(matchRequest.getId())
                 .opponentId(opponent.getId())
                 .status(matchRequest.getStatus().name())
                 .expiresAt(matchRequest.getExpiresAt())
                 .build();
+
+        // 상대방한테 매칭 요청 푸시
+        messagingTemplate.convertAndSendToUser(
+                opponent.getId().toString(),
+                "/queue/match",
+                WsMessage.builder().type("MATCH_REQUEST").data(response).build()
+        );
+
+        return response;
     }
 
-    // 수락
     @Transactional
     public void acceptMatch(Long userId, Long matchRequestId) {
         UserProfile opponent = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
 
-        // 1. 락 걸고 요청 조회
         MatchRequest matchRequest = matchRequestRepository.findByIdWithLock(matchRequestId)
                 .orElseThrow(() -> new IllegalArgumentException("요청을 찾을 수 없습니다."));
 
-        // 2. 내가 opponent인지 확인
         if (!matchRequest.getOpponent().getId().equals(opponent.getId())) {
             throw new IllegalArgumentException("수락 권한이 없습니다.");
         }
-
-        // 3. 만료 여부 확인
         if (matchRequest.isExpired()) {
             matchRequest.timeout();
             throw new IllegalArgumentException("만료된 요청입니다.");
         }
-
-        // 4. 이미 처리된 요청인지 확인
         if (matchRequest.getStatus() != MatchRequest.MatchRequestStatus.PENDING) {
             throw new IllegalArgumentException("이미 처리된 요청입니다.");
         }
-
-        // 5. 나 또는 상대방이 이미 다른 매칭에서 ACCEPTED 됐는지 확인
         if (matchRequestRepository.existsAcceptedMatchByUserId(opponent.getId()) ||
                 matchRequestRepository.existsAcceptedMatchByUserId(matchRequest.getRequester().getId())) {
             throw new IllegalArgumentException("이미 매칭된 유저입니다.");
         }
 
-        // 6. 수락 처리
         matchRequest.accept();
 
-        // 7. quick_match_log 양쪽 MATCHED
         quickMatchLogRepository.findTopByUserProfileIdAndStatus(
                         opponent.getId(), QuickMatchLog.MatchStatus.WAITING)
                 .ifPresent(log -> log.updateStatus(QuickMatchLog.MatchStatus.MATCHED));
@@ -156,12 +164,35 @@ public class QuickMatchService {
                         matchRequest.getRequester().getId(), QuickMatchLog.MatchStatus.WAITING)
                 .ifPresent(log -> log.updateStatus(QuickMatchLog.MatchStatus.MATCHED));
 
-        // 8. user_profile 양쪽 is_matching = 0
         opponent.updateMatchingStatus(false);
         matchRequest.getRequester().updateMatchingStatus(false);
+
+        // waiting 풀에서 양쪽 제거
+        sessionRegistry.removeFromWaiting(opponent.getId());
+        sessionRegistry.removeFromWaiting(matchRequest.getRequester().getId());
+
+        // 양쪽 waiting 유저들한테 두 명이 빠졌다고 푸시
+        sessionRegistry.getWaitingPool().forEach(waitingProfileId -> {
+            messagingTemplate.convertAndSendToUser(
+                    waitingProfileId.toString(),
+                    "/queue/match",
+                    WsMessage.builder().type("CANDIDATE_LEFT").data(opponent.getId()).build()
+            );
+            messagingTemplate.convertAndSendToUser(
+                    waitingProfileId.toString(),
+                    "/queue/match",
+                    WsMessage.builder().type("CANDIDATE_LEFT").data(matchRequest.getRequester().getId()).build()
+            );
+        });
+
+        // 요청자한테 수락 푸시
+        messagingTemplate.convertAndSendToUser(
+                matchRequest.getRequester().getId().toString(),
+                "/queue/match",
+                WsMessage.builder().type("MATCH_ACCEPTED").data(matchRequestId).build()
+        );
     }
 
-    // 거절
     @Transactional
     public void rejectMatch(Long userId, Long matchRequestId) {
         UserProfile opponent = userProfileRepository.findByAuthUser_Id(userId)
@@ -170,22 +201,44 @@ public class QuickMatchService {
         MatchRequest matchRequest = matchRequestRepository.findByIdWithLock(matchRequestId)
                 .orElseThrow(() -> new IllegalArgumentException("요청을 찾을 수 없습니다."));
 
-        // 1. 내가 opponent인지 확인
         if (!matchRequest.getOpponent().getId().equals(opponent.getId())) {
             throw new IllegalArgumentException("거절 권한이 없습니다.");
         }
-
-        // 2. 만료 여부 확인
         if (matchRequest.isExpired()) {
             matchRequest.timeout();
             throw new IllegalArgumentException("만료된 요청입니다.");
         }
-
-        // 3. 이미 처리된 요청인지 확인
         if (matchRequest.getStatus() != MatchRequest.MatchRequestStatus.PENDING) {
             throw new IllegalArgumentException("이미 처리된 요청입니다.");
         }
 
         matchRequest.reject();
+
+        // 요청자한테 거절 푸시
+        messagingTemplate.convertAndSendToUser(
+                matchRequest.getRequester().getId().toString(),
+                "/queue/match",
+                WsMessage.builder().type("MATCH_REJECTED").data(matchRequestId).build()
+        );
+    }
+
+    // 현재 waiting 풀에서 후보 목록 빌드 (본인 제외)
+    private List<CandidateResponse> buildCandidates(UserProfile me) {
+        return sessionRegistry.getWaitingPool().stream()
+                .filter(id -> !id.equals(me.getId()))
+                .map(id -> userProfileRepository.findById(id).orElse(null))
+                .filter(profile -> profile != null && profile.isMatching())
+                .map(this::buildCandidate)
+                .collect(Collectors.toList());
+    }
+
+    // 단일 유저 CandidateResponse 빌드
+    private CandidateResponse buildCandidate(UserProfile profile) {
+        UserSurvey survey = userSurveyRepository
+                .findByUserProfile_Id(profile.getId())
+                .orElse(null);
+        List<UserSurveyExercise> exercises = userSurveyExerciseRepository
+                .findByUserProfile_Id(profile.getId());
+        return CandidateResponse.of(profile, survey, exercises);
     }
 }
