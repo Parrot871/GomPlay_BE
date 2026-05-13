@@ -58,6 +58,7 @@ public class ScheduleService {
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
         userScheduleRepository.deleteByUserProfile_Id(userProfile.getId());
+        userScheduleRepository.flush();
 
         List<UserSchedule> schedules = request.getSchedules().stream()
                 .map(item -> UserSchedule.builder()
