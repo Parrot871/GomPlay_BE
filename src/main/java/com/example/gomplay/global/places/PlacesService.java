@@ -36,7 +36,7 @@ public class PlacesService {
                                 "latitude": %f,
                                 "longitude": %f
                             },
-                            "radius": 10000.0
+                            "radius": 20000.0
                         }
                     }
                 }
