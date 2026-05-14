@@ -10,6 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +36,7 @@ public class PlacesService {
                                 "latitude": %f,
                                 "longitude": %f
                             },
-                            "radius": 2000.0
+                            "radius": 10000.0
                         }
                     }
                 }
@@ -72,6 +73,11 @@ public class PlacesService {
             }
         }
 
+        // 20km 이내만 필터링
+        places = places.stream()
+                .filter(p -> parseDistance(p.getDistance()) <= 20000)
+                .collect(Collectors.toList());
+
         if ("distance".equals(sortBy)) {
             places.sort((a, b) -> {
                 double distA = parseDistance(a.getDistance());
@@ -89,12 +95,12 @@ public class PlacesService {
         if (sportType == null) return "운동 시설";
         return switch (sportType) {
             case "축구", "풋살" -> "풋살장 축구장";
-            case "농구" -> "농구장";
+            case "농구" -> "농구장 실외";
             case "배드민턴" -> "배드민턴장";
             case "테니스" -> "테니스장";
             case "헬스" -> "헬스장 피트니스";
             case "등산" -> "등산로 공원";
-            case "런닝" -> "공원 트랙 운동장";
+            case "런닝" -> "공원 운동장";
             case "자전거" -> "자전거 도로";
             case "당구" -> "당구장";
             case "야구" -> "야구장 배팅연습장";
