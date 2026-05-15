@@ -86,4 +86,8 @@ public class UserProfile {
     public void updateMatchingStatus(boolean isMatching) {
         this.isMatching = isMatching;
     }
+
+    public void addPoint(int point) {
+    this.pointBalance += point;
+    }
 }
