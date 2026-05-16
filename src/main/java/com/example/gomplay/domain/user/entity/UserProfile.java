@@ -93,4 +93,12 @@ public class UserProfile {
     public void addPoint(int point) {
     this.pointBalance += point;
     }
+
+    public void incrementMatchCount() {
+    this.matchCount += 1;
+    }
+
+    public void incrementNoShowCount() {
+    this.noShowCount += 1;  
+    }
 }
