@@ -20,18 +20,28 @@ public class CandidateResponse {
     private String name;
     private String profileImageUrl;
     private String department;
+    private String college;
     private String studentId;
     private String partnerStyle;
     private String exerciseIntensity;
     private String exerciseReason;
     private List<String> exerciseTypes;
+    private int matchScore;
+    private List<String> matchReasons;
 
-    public static CandidateResponse of(UserProfile profile, UserSurvey survey, List<UserSurveyExercise> exercises) {
+    public static CandidateResponse of(
+            UserProfile profile,
+            UserSurvey survey,
+            List<UserSurveyExercise> exercises,
+            int matchScore,
+            List<String> matchReasons
+    ) {
         return CandidateResponse.builder()
                 .userProfileId(profile.getId())
                 .name(profile.getName())
                 .profileImageUrl(profile.getProfileImageUrl())
                 .department(profile.getDepartment())
+                .college(profile.getCollege())
                 .studentId(profile.getStudentId())
                 .partnerStyle(survey != null ? survey.getPartnerStyle().name() : null)
                 .exerciseIntensity(survey != null ? survey.getExerciseIntensity().name() : null)
@@ -39,6 +49,8 @@ public class CandidateResponse {
                 .exerciseTypes(exercises.stream()
                         .map(e -> e.getExerciseType().name())
                         .collect(Collectors.toList()))
+                .matchScore(matchScore)
+                .matchReasons(matchReasons)
                 .build();
     }
 }

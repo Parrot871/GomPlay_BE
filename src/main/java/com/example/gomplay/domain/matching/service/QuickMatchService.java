@@ -21,6 +21,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,7 @@ public class QuickMatchService {
     private final MatchRequestRepository matchRequestRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
+    private final Matchscorecalculator matchScoreCalculator;
 
     @Transactional
     public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
@@ -68,16 +70,22 @@ public class QuickMatchService {
                     WsMessage.builder().type("CANDIDATES_UPDATE").data(candidates).build()
             );
 
-            // 기존 waiting 유저들한테 내 정보 푸시
-            CandidateResponse myInfo = buildCandidate(userProfile);
+            // 기존 waiting 유저들한테 내 정보 푸시 (각 유저 기준으로 점수/이유 계산)
             sessionRegistry.getWaitingPool().stream()
                     .filter(id -> !id.equals(userProfile.getId()))
                     .forEach(waitingProfileId ->
-                            messagingTemplate.convertAndSendToUser(
-                                    waitingProfileId.toString(),
-                                    "/queue/match",
-                                    WsMessage.builder().type("NEW_CANDIDATE").data(myInfo).build()
-                            )
+                            userProfileRepository.findById(waitingProfileId).ifPresent(waitingProfile -> {
+                                int scoreAtoB = matchScoreCalculator.calculate(waitingProfile, userProfile);
+                                int scoreBtoA = matchScoreCalculator.calculate(userProfile, waitingProfile);
+                                int finalScore = (scoreAtoB + scoreBtoA) / 2;
+                                List<String> reasons = matchScoreCalculator.getMatchReasons(waitingProfile, userProfile);
+                                CandidateResponse myInfo = buildCandidate(userProfile, finalScore, reasons);
+                                messagingTemplate.convertAndSendToUser(
+                                        waitingProfileId.toString(),
+                                        "/queue/match",
+                                        WsMessage.builder().type("NEW_CANDIDATE").data(myInfo).build()
+                                );
+                            })
                     );
         } else {
             quickMatchLogRepository.findAllByUserProfileIdAndStatus(
@@ -222,23 +230,30 @@ public class QuickMatchService {
         );
     }
 
-    // 현재 waiting 풀에서 후보 목록 빌드 (본인 제외)
+    // -- 현재 waiting 풀에서 후보 목록 빌드 (본인 제외, 양방향 점수 계산 후 내림차순 정렬)
     private List<CandidateResponse> buildCandidates(UserProfile me) {
         return sessionRegistry.getWaitingPool().stream()
                 .filter(id -> !id.equals(me.getId()))
                 .map(id -> userProfileRepository.findById(id).orElse(null))
                 .filter(profile -> profile != null && profile.isMatching())
-                .map(this::buildCandidate)
+                .map(profile -> {
+                    int scoreAtoB = matchScoreCalculator.calculate(me, profile);
+                    int scoreBtoA = matchScoreCalculator.calculate(profile, me);
+                    int finalScore = (scoreAtoB + scoreBtoA) / 2;
+                    List<String> reasons = matchScoreCalculator.getMatchReasons(me, profile);
+                    return buildCandidate(profile, finalScore, reasons);
+                })
+                .sorted(Comparator.comparingInt(CandidateResponse::getMatchScore).reversed())
                 .collect(Collectors.toList());
     }
 
-    // 단일 유저 CandidateResponse 빌드
-    private CandidateResponse buildCandidate(UserProfile profile) {
+    // -- 단일 유저 CandidateResponse 빌드
+    private CandidateResponse buildCandidate(UserProfile profile, int matchScore, List<String> reasons) {
         UserSurvey survey = userSurveyRepository
                 .findByUserProfile_Id(profile.getId())
                 .orElse(null);
         List<UserSurveyExercise> exercises = userSurveyExerciseRepository
                 .findByUserProfile_Id(profile.getId());
-        return CandidateResponse.of(profile, survey, exercises);
+        return CandidateResponse.of(profile, survey, exercises, matchScore, reasons);
     }
 }
