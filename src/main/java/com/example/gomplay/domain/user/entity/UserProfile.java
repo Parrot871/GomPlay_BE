@@ -58,6 +58,9 @@ public class UserProfile {
     @Column(name = "is_matching", nullable = false)
     private boolean isMatching = false;
 
+    @Column(name = "college")
+    private String college;
+
 
 
     @PrePersist
