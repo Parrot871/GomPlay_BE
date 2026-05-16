@@ -50,65 +50,111 @@ public class Matchscorecalculator {
         UserSurvey otherSurvey = surveyRepository.findByUserProfile_Id(other.getId()).orElse(null);
 
         double score = 0;
-        score += scheduleScore(me, other) * WEIGHT_SCHEDULE;
-        score += exerciseScore(me, other) * WEIGHT_EXERCISE;
+        score += scheduleScore(me, other)    * WEIGHT_SCHEDULE;
+        score += exerciseScore(me, other)   * WEIGHT_EXERCISE;
         score += personalityScore(mySurvey, otherSurvey) * WEIGHT_PERSONALITY;
-        score += mannerScore(other) * WEIGHT_MANNER;
-        score += departmentScore(me, other) * WEIGHT_DEPARTMENT;
-        score += studentIdScore(me, other) * WEIGHT_STUDENT_ID;
+        score += mannerScore(other)      * WEIGHT_MANNER;
+        score += departmentScore(me, other)  * WEIGHT_DEPARTMENT;
+        score += studentIdScore(me, other)   * WEIGHT_STUDENT_ID;
 
         return (int)Math.round(score);
-
     }
 
     // -- 1. 시간표 공강 일치 (30%) -------------------------------------------
     // 수업이 없는 구간(공강)을 요일별로 구하고 두 사람의 공강이 겹치는 총
-    private double scheduleScore(UserProfile me, UserProfile other){
-        Map<UserSchedule.DayOfWeek, List<UserSchedule>> myMap = groupByDay(scheduleRepository.findByUserProfile_Id(me.getId()));
-        Map<UserSchedule.DayOfWeek, List<UserSchedule>> otherMap = groupByDay(scheduleRepository.findByUserProfile_Id(other.getId()));
+    private static final List<UserSchedule.DayOfWeek> WEEKDAYS = List.of(
+            UserSchedule.DayOfWeek.MON,
+            UserSchedule.DayOfWeek.TUE,
+            UserSchedule.DayOfWeek.WED,
+            UserSchedule.DayOfWeek.THU,
+            UserSchedule.DayOfWeek.FRI
+    );
+    private double scheduleScore(UserProfile me, UserProfile other) {
+        Map<UserSchedule.DayOfWeek, List<UserSchedule>> myMap =
+                groupByDay(scheduleRepository.findByUserProfile_Id(me.getId()));
+        Map<UserSchedule.DayOfWeek, List<UserSchedule>> otherMap =
+                groupByDay(scheduleRepository.findByUserProfile_Id(other.getId()));
 
         long overlapMinutes = 0;
-        for (UserSchedule.DayOfWeek day : UserSchedule.DayOfWeek.values()){
-            List<long[]> myFree = getFreeSlots(myMap.getOrDefault(day, Collections.emptyList()));
-            List<long[]> otherFree = getFreeSlots(otherMap.getOrDefault(day, Collections.emptyList()));
+        long totalPossibleMinutes = 0;
+
+        for (UserSchedule.DayOfWeek day : WEEKDAYS) {
+            List<UserSchedule> myClasses = myMap.getOrDefault(day, Collections.emptyList());
+            List<UserSchedule> otherClasses = otherMap.getOrDefault(day, Collections.emptyList());
+
+            // 둘 중 하나라도 수업 없는 날은 스킵 → 0점
+            if (myClasses.isEmpty() || otherClasses.isEmpty()) continue;
+
+            List<long[]> myFree = getReliableFreeSlots(myClasses);
+            List<long[]> otherFree = getReliableFreeSlots(otherClasses);
+
+            if (myFree.isEmpty() || otherFree.isEmpty()) continue;
+
             overlapMinutes += intersectMinutes(myFree, otherFree);
+            totalPossibleMinutes += unionMinutes(myFree, otherFree);
         }
-        double ratio = (double) overlapMinutes / TOTAL_MINUTES;
-        return Math.min(ratio, 1.0) * 100;
+
+        if (totalPossibleMinutes == 0) return 0;
+        return Math.min((double) overlapMinutes / totalPossibleMinutes, 1.0) * 100;
     }
 
     private Map<UserSchedule.DayOfWeek, List<UserSchedule>> groupByDay(List<UserSchedule> schedules){
         return schedules.stream().collect(Collectors.groupingBy(UserSchedule::getDayOfWeek));
     }
 
-    private List<long[]> getFreeSlots(List<UserSchedule> schedules){
+    // 수업 있는 날만: 첫수업~마지막수업 사이 공강만 반환
+    private List<long[]> getReliableFreeSlots(List<UserSchedule> schedules) {
+        // 수업 없는 날은 제외
+        if (schedules.isEmpty()) return Collections.emptyList();
+
         List<UserSchedule> sorted = schedules.stream()
                 .sorted(Comparator.comparing(UserSchedule::getStartTime))
                 .collect(Collectors.toList());
-        List<long[]> freeSlots = new ArrayList<>();
-        LocalTime cursor = DAY_START;
 
-        for(UserSchedule s : sorted){
+        List<long[]> freeSlots = new ArrayList<>();
+        LocalTime cursor = DAY_START; // 윈도우를 하루 전체로 변경
+
+        for (UserSchedule s : sorted) {
             LocalTime classStart = s.getStartTime().isBefore(DAY_START) ? DAY_START : s.getStartTime();
             LocalTime classEnd = s.getEndTime().isAfter(DAY_END) ? DAY_END : s.getEndTime();
 
-            if(cursor.isBefore(classStart)){
+            if (cursor.isBefore(classStart)) {
                 freeSlots.add(new long[]{
-                    ChronoUnit.MINUTES.between(DAY_START, cursor),
-                    ChronoUnit.MINUTES.between(DAY_START, classStart)
+                        ChronoUnit.MINUTES.between(DAY_START, cursor),
+                        ChronoUnit.MINUTES.between(DAY_START, classStart)
                 });
             }
-            if(classEnd.isAfter(cursor)){
-                cursor = classEnd;
-            }
+            if (classEnd.isAfter(cursor)) cursor = classEnd;
         }
-        if(cursor.isBefore(DAY_END)){
+        // 마지막 수업 이후 ~ DAY_END 도 공강으로 포함
+        if (cursor.isBefore(DAY_END)) {
             freeSlots.add(new long[]{
-                ChronoUnit.MINUTES.between(DAY_START, cursor),
-                TOTAL_MINUTES
+                    ChronoUnit.MINUTES.between(DAY_START, cursor),
+                    TOTAL_DAY_MINUTES
             });
         }
         return freeSlots;
+    }
+
+    private long unionMinutes(List<long[]> a, List<long[]> b) {
+        List<long[]> merged = new ArrayList<>();
+        merged.addAll(a);
+        merged.addAll(b);
+        merged.sort(Comparator.comparingLong(s -> s[0]));
+
+        long total = 0;
+        long curStart = -1, curEnd = -1;
+        for (long[] slot : merged) {
+            if (slot[0] > curEnd) {
+                if (curEnd != -1) total += curEnd - curStart;
+                curStart = slot[0];
+                curEnd = slot[1];
+            } else {
+                curEnd = Math.max(curEnd, slot[1]);
+            }
+        }
+        if (curEnd != -1) total += curEnd - curStart;
+        return total;
     }
 
     private long intersectMinutes(List<long[]> a, List<long[]> b){
@@ -117,6 +163,8 @@ public class Matchscorecalculator {
             for (long[] sb : b){
                 long start = Math.max(sa[0], sb[0]);
                 long end = Math.min(sa[1], sb[1]);
+                System.out.printf("    intersect [%d,%d] ∩ [%d,%d] = start:%d end:%d%n",
+                        sa[0],sa[1],sb[0],sb[1],start,end);
                 if(end > start) total += (end-start);
             }
         }
@@ -186,8 +234,8 @@ public class Matchscorecalculator {
         if (me.getStudentId() == null || other.getStudentId() == null) return 0;
 
         try {
-            int myYear    = Integer.parseInt(me.getStudentId());
-            int otherYear = Integer.parseInt(other.getStudentId());
+            int myYear    = Integer.parseInt(me.getStudentId().replaceAll("[^0-9]", ""));
+            int otherYear = Integer.parseInt(other.getStudentId().replaceAll("[^0-9]", ""));
             int diff = Math.abs(myYear - otherYear);
 
             if (diff == 0) return 100;
@@ -246,4 +294,5 @@ public class Matchscorecalculator {
 
         return reasons;
     }
+
 }
