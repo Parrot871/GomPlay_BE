@@ -60,6 +60,7 @@ public class AuthService {
                 .name(request.getName())
                 .studentId(request.getStudentId())
                 .department(request.getDepartment())
+                .college(request.getCollege())
                 .build();
         emailVerificationRepository.save(verification);
 
@@ -117,6 +118,7 @@ public class AuthService {
                 .name(verification.getName())
                 .studentId(verification.getStudentId())
                 .department(verification.getDepartment())
+                .college(verification.getCollege())
                 .build();
         userProfileRepository.save(userProfile);
     }
