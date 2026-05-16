@@ -34,13 +34,16 @@ public class EmailVerification {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column
+    @Column(nullable = false)
     private String name;
 
-    @Column
+    @Column(nullable = false)
     private String studentId;
 
-    @Column
+    @Column(nullable = false)
+    private String college;
+
+    @Column(nullable = false)
     private String department;
 
     @CreatedDate

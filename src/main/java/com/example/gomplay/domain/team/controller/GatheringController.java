@@ -7,6 +7,7 @@ import com.example.gomplay.domain.team.dto.GatheringCreateRequest;
 import com.example.gomplay.domain.team.dto.GatheringCreateResponse;
 import com.example.gomplay.domain.team.dto.GatheringJoinResponse;
 import com.example.gomplay.domain.team.dto.GatheringDetailResponse;
+import com.example.gomplay.domain.team.service.GatheringRecommendService;
 import com.example.gomplay.domain.team.service.GatheringService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.example.gomplay.domain.team.dto.GatheringListResponse;
 import com.example.gomplay.domain.team.dto.GatheringParticipantResponse;
+import com.example.gomplay.domain.team.dto.GatheringRecommendResponse;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 
@@ -24,6 +27,7 @@ import org.springframework.data.domain.Page;
 public class GatheringController {
 
     private final GatheringService gatheringService;
+    private final GatheringRecommendService gatheringRecommendService; 
 
     @PostMapping
     public ResponseEntity<GatheringCreateResponse> createGathering(
@@ -85,4 +89,10 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
         @PathVariable Long participantId) {
     return ResponseEntity.ok(gatheringService.rejectParticipant(userId, gatheringId, participantId));
 }
+
+    @GetMapping("/recommend")
+public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
+        @AuthenticationPrincipal Long userId) {
+    return ResponseEntity.ok(gatheringRecommendService.getRecommendedGatherings(userId));
+}   
 }

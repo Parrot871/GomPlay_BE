@@ -23,5 +23,8 @@ public class SignupRequest {
     private String studentId;
 
     @NotBlank
+    private String college;
+
+    @NotBlank
     private String department;
 }

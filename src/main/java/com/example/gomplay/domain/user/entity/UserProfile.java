@@ -58,6 +58,9 @@ public class UserProfile {
     @Column(name = "is_matching", nullable = false)
     private boolean isMatching = false;
 
+    @Column(name = "college")
+    private String college;
+
 
 
     @PrePersist
@@ -85,5 +88,9 @@ public class UserProfile {
 
     public void updateMatchingStatus(boolean isMatching) {
         this.isMatching = isMatching;
+    }
+
+    public void addPoint(int point) {
+    this.pointBalance += point;
     }
 }
