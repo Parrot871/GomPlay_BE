@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,10 +62,19 @@ public class GatheringRecommendService {
                                    Set<String> preferredSports, List<UserSchedule> userSchedules) {
         double score = 0;
 
-        // 1. 선호 운동 종목 일치 (35점)
-        if (preferredSports.contains(gathering.getSportType())) {
-            score += 35;
-        }
+        // 1. 선호 운동 종목 - 자카드 유사도 (35점)
+        Set<String> gatheringSportSet = new HashSet<>();
+        gatheringSportSet.add(gathering.getSportType());
+
+        Set<String> union = new HashSet<>(preferredSports);
+        union.addAll(gatheringSportSet);
+
+        Set<String> intersection = new HashSet<>(preferredSports);
+        intersection.retainAll(gatheringSportSet);
+
+        double jaccardScore = union.isEmpty() ? 0 :
+                (double) intersection.size() / union.size();
+        score += jaccardScore * 35;
 
         // 2. 시간표 일치 (25점) - 수업 시간과 겹치지 않으면 점수
         if (isAvailable(gathering.getScheduledAt(), gathering.getScheduledEndAt(), userSchedules)) {
@@ -95,20 +105,37 @@ public class GatheringRecommendService {
             score += ((double) remaining / gathering.getMaxParticipants()) * 5;
         }
 
+        // 7. 노쇼 패널티 - 방장 기준
+        score += getNoShowPenalty(gathering.getHost().getNoShowCount(), true);
+
         return score;
+    }
+
+    private double getNoShowPenalty(Integer noShowCount, boolean isHost) {
+        if (noShowCount == null || noShowCount == 0) return 0;
+
+        if (isHost) {
+            // 방장 노쇼 패널티 (더 강하게)
+            if (noShowCount <= 2) return -10;
+            else if (noShowCount <= 5) return -25;
+            else return -40;
+        } else {
+            // 일반 참여자 노쇼 패널티
+            if (noShowCount <= 2) return -5;
+            else if (noShowCount <= 5) return -15;
+            else return -25;
+        }
     }
 
     private boolean isAvailable(LocalDateTime scheduledAt, LocalDateTime scheduledEndAt,
                                   List<UserSchedule> userSchedules) {
         if (userSchedules.isEmpty()) return true;
 
-        // 모집글 요일 변환
         String gatheringDay = scheduledAt.getDayOfWeek().name().substring(0, 3);
 
         for (UserSchedule schedule : userSchedules) {
             if (!schedule.getDayOfWeek().name().equals(gatheringDay)) continue;
 
-            // 시간 겹침 체크
             boolean overlaps = scheduledAt.toLocalTime().isBefore(schedule.getEndTime())
                     && scheduledEndAt.toLocalTime().isAfter(schedule.getStartTime());
 
