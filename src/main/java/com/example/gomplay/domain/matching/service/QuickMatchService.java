@@ -256,4 +256,22 @@ public class QuickMatchService {
                 .findByUserProfile_Id(profile.getId());
         return CandidateResponse.of(profile, survey, exercises, matchScore, reasons);
     }
+
+    public CandidateResponse getNextCandidate(Long userId, List<Long> excludeIds) {
+        UserProfile me = userProfileRepository.findByAuthUser_Id(userId).orElseThrow();
+        return sessionRegistry.getWaitingPool().stream()
+                .filter(id -> !id.equals(me.getId()))
+                .filter(id -> !excludeIds.contains(id))
+                .map(id -> userProfileRepository.findById(id).orElse(null))
+                .filter(profile -> profile != null && profile.isMatching())
+                .map(profile -> {
+                    int scoreAtoB = matchScoreCalculator.calculate(me, profile);
+                    int scoreBtoA = matchScoreCalculator.calculate(profile, me);
+                    int finalScore = (scoreAtoB + scoreBtoA) / 2;
+                    List<String> reasons = matchScoreCalculator.getMatchReasons(me, profile);
+                    return buildCandidate(profile, finalScore, reasons);
+                })
+                .max(Comparator.comparingInt(CandidateResponse::getMatchScore))
+                .orElse(null);
+    }
 }

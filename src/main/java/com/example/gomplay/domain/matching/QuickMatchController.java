@@ -51,4 +51,15 @@ public class QuickMatchController {
         quickMatchService.rejectMatch(userId, id);
         return ResponseEntity.ok(ApiResponse.success("매칭이 거절되었습니다.", null));
     }
+
+    @PostMapping("/pass")
+    public ResponseEntity<ApiResponse<CandidateResponse>> pass(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody PassRequest request) {
+        CandidateResponse next = quickMatchService.getNextCandidate(userId, request.getExcludeIds());
+        if (next == null) {
+            return ResponseEntity.ok(ApiResponse.success("추천할 상대가 없어요.", null));
+        }
+        return ResponseEntity.ok(ApiResponse.success("다음 추천입니다.", next));
+    }
 }
