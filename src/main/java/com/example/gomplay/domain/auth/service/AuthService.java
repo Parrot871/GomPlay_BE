@@ -7,6 +7,7 @@ import com.example.gomplay.domain.auth.entity.RefreshToken;
 import com.example.gomplay.domain.auth.repository.AuthUserRepository;
 import com.example.gomplay.domain.auth.repository.EmailVerificationRepository;
 import com.example.gomplay.domain.auth.repository.RefreshTokenRepository;
+import com.example.gomplay.domain.point.service.PointService;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import com.example.gomplay.global.util.JwtUtil;
@@ -30,6 +31,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
+    private final PointService pointService;
 
     // 회원가입 + 인증코드 발송
     @Transactional
@@ -121,6 +123,9 @@ public class AuthService {
                 .college(verification.getCollege())
                 .build();
         userProfileRepository.save(userProfile);
+
+        // 회원가입 포인트 지급 +100P
+        pointService.addPoint(userProfile, 100, "signup", null);
     }
 
     // 로그인

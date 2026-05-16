@@ -8,6 +8,7 @@ import com.example.gomplay.domain.matching.entity.MatchRequest;
 import com.example.gomplay.domain.matching.entity.QuickMatchLog;
 import com.example.gomplay.domain.matching.repository.MatchRequestRepository;
 import com.example.gomplay.domain.matching.repository.QuickMatchLogRepository;
+import com.example.gomplay.domain.point.service.PointService;
 import com.example.gomplay.domain.survey.entity.UserSurvey;
 import com.example.gomplay.domain.survey.entity.UserSurveyExercise;
 import com.example.gomplay.domain.survey.repository.UserSurveyExerciseRepository;
@@ -37,6 +38,7 @@ public class QuickMatchService {
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
     private final Matchscorecalculator matchScoreCalculator;
+    private final PointService pointService;
 
     @Transactional
     public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
@@ -123,6 +125,9 @@ public class QuickMatchService {
         MatchRequest matchRequest = MatchRequest.create(requester, opponent);
         matchRequestRepository.save(matchRequest);
 
+        // 퀵매칭 포인트 차감 -10P
+        pointService.addPoint(requester, -10, "quick_match", null);
+
         MatchRequestResponse response = MatchRequestResponse.builder()
                 .matchRequestId(matchRequest.getId())
                 .opponentId(opponent.getId())
@@ -164,6 +169,24 @@ public class QuickMatchService {
         }
 
         matchRequest.accept();
+        UserProfile requester = matchRequest.getRequester();
+
+        // 첫 매칭 여부 확인
+        if (requester.getMatchCount() == 0) {
+                pointService.addPoint(requester, 30, "first_match", null);
+        } else {
+                pointService.addPoint(requester, 5, "match_complete", null);
+        }
+
+        if (opponent.getMatchCount() == 0) {
+                 pointService.addPoint(opponent, 30, "first_match", null);
+        } else {
+        pointService.addPoint(opponent, 5, "match_complete", null);
+        }
+
+// matchCount 증가
+requester.incrementMatchCount();
+opponent.incrementMatchCount();
 
         quickMatchLogRepository.findTopByUserProfileIdAndStatus(
                         opponent.getId(), QuickMatchLog.MatchStatus.WAITING)
