@@ -5,8 +5,10 @@ import com.example.gomplay.domain.matching.dto.MatchRequestDto;
 import com.example.gomplay.domain.matching.dto.MatchRequestResponse;
 import com.example.gomplay.domain.matching.dto.MatchingToggleResponse;
 import com.example.gomplay.domain.matching.entity.MatchRequest;
+import com.example.gomplay.domain.matching.entity.MatchResult;
 import com.example.gomplay.domain.matching.entity.QuickMatchLog;
 import com.example.gomplay.domain.matching.repository.MatchRequestRepository;
+import com.example.gomplay.domain.matching.repository.MatchResultRepository;
 import com.example.gomplay.domain.matching.repository.QuickMatchLogRepository;
 import com.example.gomplay.domain.point.service.PointService;
 import com.example.gomplay.domain.survey.entity.UserSurvey;
@@ -38,6 +40,7 @@ public class QuickMatchService {
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
     private final Matchscorecalculator matchScoreCalculator;
+    private final MatchResultRepository matchResultRepository;
     private final PointService pointService;
 
     @Transactional
@@ -169,6 +172,11 @@ public class QuickMatchService {
         }
 
         matchRequest.accept();
+        matchResultRepository.save(MatchResult.create(
+                matchRequest,
+                matchRequest.getRequester(),
+                opponent
+        ));
         UserProfile requester = matchRequest.getRequester();
 
         // 첫 매칭 여부 확인
