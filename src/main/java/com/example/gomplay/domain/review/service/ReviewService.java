@@ -33,10 +33,14 @@ public class ReviewService {
         UserProfile reviewee = userProfileRepository.findById(request.getRevieweeId())
                 .orElseThrow(() -> new IllegalArgumentException("평가 대상자를 찾을 수 없습니다."));
 
-        // 중복 평가 방지
-        if (request.getMatchResultId() != null &&
-                reviewRepository.existsByReviewer_IdAndMatchResultId(reviewer.getId(), request.getMatchResultId())) {
-            throw new IllegalArgumentException("이미 평가한 매칭입니다.");
+    // 중복 평가 방지
+    if (request.getMatchResultId() != null &&
+        reviewRepository.existsByReviewer_IdAndMatchResultId(reviewer.getId(), request.getMatchResultId())) {
+         throw new IllegalArgumentException("이미 평가한 매칭입니다.");
+        }
+    if (request.getGatheringId() != null &&
+        reviewRepository.existsByReviewer_IdAndGatheringId(reviewer.getId(), request.getGatheringId())) {
+        throw new IllegalArgumentException("이미 평가한 모임입니다.");
         }
 
         // 매너온도 변동 계산
@@ -78,6 +82,7 @@ public class ReviewService {
                 .reviewer(reviewer)
                 .reviewee(reviewee)
                 .matchResultId(request.getMatchResultId())
+                .gatheringId(request.getGatheringId())
                 .goodTags(goodTags)
                 .badTags(badTags)
                 .isNoShow(request.isNoShow())

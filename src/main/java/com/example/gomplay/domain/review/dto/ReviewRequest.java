@@ -7,6 +7,7 @@ import java.util.List;
 public class ReviewRequest {
     private Long revieweeId;
     private Long matchResultId;
+    private Long gatheringId; 
     private List<String> goodTags;
     private List<String> badTags;
     private boolean isNoShow;
