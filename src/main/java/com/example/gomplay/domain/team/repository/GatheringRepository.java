@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.time.LocalDateTime;
 
 
 public interface GatheringRepository extends JpaRepository<Gathering, Long> {
@@ -20,5 +22,8 @@ public interface GatheringRepository extends JpaRepository<Gathering, Long> {
 
     @Query("SELECT g FROM Gathering g JOIN GatheringParticipant gp ON g.id = gp.gathering.id WHERE gp.user.id = :userId AND g.status = :status")
     List<Gathering> findByParticipantIdAndStatus(@Param("userId") Long userId, @Param("status") Gathering.Status status);
+
+    List<Gathering> findByStatusInAndScheduledEndAtBefore(List<Gathering.Status> statuses, LocalDateTime dateTime);
+
 }
 
