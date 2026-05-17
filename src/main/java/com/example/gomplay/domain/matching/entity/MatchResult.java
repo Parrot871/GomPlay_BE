@@ -25,7 +25,7 @@ public class MatchResult {
     private MatchRequest matchRequest;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "match_request_id", nullable = false)
+    @JoinColumn(name = "user_a_id", nullable = false)
     private UserProfile userA;
 
     @ManyToOne(fetch = FetchType.LAZY)
