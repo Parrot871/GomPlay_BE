@@ -69,7 +69,7 @@ public class Gathering {
     private LocalDateTime updatedAt;
 
     public enum Status {
-        OPEN, CLOSED, CANCELLED
+        OPEN, CLOSED, CANCELLED, COMPLETED
     }
 
     @PrePersist

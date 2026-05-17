@@ -54,4 +54,11 @@ public class GatheringParticipant {
     public void updateStatus(Status status) {
     this.status = status;
     }
+
+    @Column(name = "is_completed", nullable = false)
+    private boolean isCompleted = false;
+
+    public void complete() {
+    this.isCompleted = true;
+    }
 }

@@ -6,8 +6,6 @@ import com.example.gomplay.domain.review.entity.Review;
 import com.example.gomplay.domain.review.repository.ReviewRepository;
 import com.example.gomplay.domain.report.entity.Report;
 import com.example.gomplay.domain.report.repository.ReportRepository;
-import com.example.gomplay.domain.team.entity.Gathering;
-import com.example.gomplay.domain.team.repository.GatheringRepository;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,6 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final UserProfileRepository userProfileRepository;
-    private final GatheringRepository gatheringRepository;
     private final ReportRepository reportRepository;
 
     // 평가 제출
@@ -41,13 +38,29 @@ public class ReviewService {
                 reviewRepository.existsByReviewer_IdAndMatchResultId(reviewer.getId(), request.getMatchResultId())) {
             throw new IllegalArgumentException("이미 평가한 매칭입니다.");
         }
-        if (request.getGatheringId() != null &&
-                reviewRepository.existsByReviewer_IdAndGatheringId(reviewer.getId(), request.getGatheringId())) {
-            throw new IllegalArgumentException("이미 평가한 모임입니다.");
+
+        // 매너온도 변동 계산
+        double delta = 0;
+
+        // 좋았어요 태그 하나라도 있으면 +0.5도
+        if (request.getGoodTags() != null && !request.getGoodTags().isEmpty()) {
+            delta += 0.5;
         }
 
-        // 매너온도 업데이트
-        BigDecimal newTemperature = BigDecimal.valueOf(request.getMannerTemperature());
+        // 아쉬워요 태그 1개당 -0.5도
+        if (request.getBadTags() != null) {
+            delta -= request.getBadTags().size() * 0.5;
+        }
+
+        // 노쇼 -3도
+        if (request.isNoShow()) {
+            delta -= 3.0;
+        }
+
+        // 매너온도 업데이트 (0~100 범위 제한)
+        BigDecimal newTemperature = reviewee.getMannerTemperature()
+                .add(BigDecimal.valueOf(delta));
+        newTemperature = newTemperature.max(BigDecimal.ZERO).min(BigDecimal.valueOf(100));
         reviewee.updateMannerTemperature(newTemperature);
 
         // 노쇼 처리
@@ -65,7 +78,6 @@ public class ReviewService {
                 .reviewer(reviewer)
                 .reviewee(reviewee)
                 .matchResultId(request.getMatchResultId())
-                .gatheringId(request.getGatheringId())
                 .goodTags(goodTags)
                 .badTags(badTags)
                 .isNoShow(request.isNoShow())
@@ -76,24 +88,19 @@ public class ReviewService {
 
         // 신고 처리
         if (request.getReportCategories() != null && !request.getReportCategories().isEmpty()) {
-            Gathering gathering = gatheringRepository.findById(request.getGatheringId())
-                    .orElse(null);
-
-            if (gathering != null) {
-                String reason = String.join(",", request.getReportCategories());
-                if (request.getReportContent() != null) {
-                    reason += " - " + request.getReportContent();
-                }
-
-                Report report = Report.builder()
-                        .reporter(reviewer)
-                        .reportee(reviewee)
-                        .gathering(gathering)
-                        .reason(reason)
-                        .build();
-
-                reportRepository.save(report);
+            String reason = String.join(",", request.getReportCategories());
+            if (request.getReportContent() != null) {
+                reason += " - " + request.getReportContent();
             }
+
+            Report report = Report.builder()
+                    .reporter(reviewer)
+                    .reportee(reviewee)
+                    .gathering(null)
+                    .reason(reason)
+                    .build();
+
+            reportRepository.save(report);
         }
 
         return new ReviewResponse(review);
