@@ -91,8 +91,18 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
 }
 
     @GetMapping("/recommend")
-public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
+    public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
         @AuthenticationPrincipal Long userId) {
     return ResponseEntity.ok(gatheringRecommendService.getRecommendedGatherings(userId));
-}   
+    } 
+
+
+    @PatchMapping("/{gatheringId}/complete")
+    public ResponseEntity<Void> completeGathering(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    gatheringService.completeGathering(userId, gatheringId);
+    return ResponseEntity.ok().build();
+    }
+
 }
