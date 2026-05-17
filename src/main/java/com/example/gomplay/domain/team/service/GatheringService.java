@@ -5,6 +5,7 @@ import com.example.gomplay.domain.team.dto.GatheringUpdateResponse;
 import com.example.gomplay.domain.auth.entity.AuthUser;
 import com.example.gomplay.domain.auth.repository.AuthUserRepository;
 import com.example.gomplay.domain.point.service.PointService;
+import com.example.gomplay.domain.review.repository.ReviewRepository;
 import com.example.gomplay.domain.team.dto.GatheringCreateRequest;
 import com.example.gomplay.domain.team.dto.GatheringCreateResponse;
 import com.example.gomplay.domain.team.entity.Gathering;
@@ -21,9 +22,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.gomplay.domain.team.dto.GatheringDetailResponse;
+import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
+
+import java.util.stream.Collectors;
+import java.util.List;
+import java.util.ArrayList;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
+
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +41,7 @@ public class GatheringService {
     private final UserProfileRepository userProfileRepository;
     private final GatheringParticipantRepository gatheringParticipantRepository;
     private final PointService pointService;
+    private final ReviewRepository reviewRepository;
 
     @Transactional
     public GatheringCreateResponse createGathering(Long userId, GatheringCreateRequest request) {
@@ -234,5 +243,32 @@ public class GatheringService {
         if (hostCompleted && allParticipantsCompleted) {
                 gathering.updateStatus(Gathering.Status.COMPLETED);
         }
+        }
+
+
+        @Transactional(readOnly = true)
+        public List<GatheringHistoryResponse> getGatheringHistory(Long userId) {
+        UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        // 방장으로 참여한 COMPLETED 모집글
+        List<Gathering> hostGatherings = gatheringRepository
+                .findByHost_IdAndStatus(user.getId(), Gathering.Status.COMPLETED);
+
+        // 참여자로 참여한 COMPLETED 모집글
+        List<Gathering> participantGatherings = gatheringRepository
+                .findByParticipantIdAndStatus(user.getId(), Gathering.Status.COMPLETED);
+
+        // 합치기 (중복 제거)
+        List<Gathering> allGatherings = new java.util.ArrayList<>(hostGatherings);
+        allGatherings.addAll(participantGatherings);
+
+        return allGatherings.stream()
+                .map(gathering -> {
+                        boolean isReviewed = reviewRepository
+                                .existsByReviewer_IdAndGatheringId(user.getId(), gathering.getId());
+                        return new GatheringHistoryResponse(gathering, isReviewed);
+                })
+            .   collect(Collectors.toList());
         }
 }
