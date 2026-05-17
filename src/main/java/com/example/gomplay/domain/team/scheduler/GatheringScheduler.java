@@ -1,0 +1,40 @@
+package com.example.gomplay.domain.team.scheduler;
+
+import com.example.gomplay.domain.team.entity.Gathering;
+import com.example.gomplay.domain.team.repository.GatheringRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class GatheringScheduler {
+
+    private final GatheringRepository gatheringRepository;
+
+    // 매 10분마다 실행
+    @Scheduled(fixedRate = 600000)
+    @Transactional
+    public void autoCompleteGathering() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(2);
+
+        List<Gathering> gatherings = gatheringRepository
+                .findByStatusInAndScheduledEndAtBefore(
+                        List.of(Gathering.Status.OPEN, Gathering.Status.CLOSED),
+                        cutoff
+                );
+
+        for (Gathering gathering : gatherings) {
+            gathering.updateStatus(Gathering.Status.COMPLETED);
+            log.info("자동 완료 처리: gatheringId={}", gathering.getId());
+        }
+
+        log.info("자동 완료 처리 완료: {}건", gatherings.size());
+    }
+}
