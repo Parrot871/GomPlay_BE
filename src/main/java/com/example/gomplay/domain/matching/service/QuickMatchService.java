@@ -39,7 +39,7 @@ public class QuickMatchService {
     private final MatchRequestRepository matchRequestRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketSessionRegistry sessionRegistry;
-    private final Matchscorecalculator matchScoreCalculator;
+    private final MatchScoreCalculator matchScoreCalculator;
     private final MatchResultRepository matchResultRepository;
     private final PointService pointService;
 

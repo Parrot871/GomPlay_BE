@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @RequiredArgsConstructor
-public class Matchscorecalculator {
+public class MatchScoreCalculator {
     private static final double WEIGHT_SCHEDULE = 0.30;
     private static final double WEIGHT_EXERCISE = 0.25;
     private static final double WEIGHT_PERSONALITY = 0.20;
