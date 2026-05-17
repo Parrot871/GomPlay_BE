@@ -72,6 +72,18 @@ public class Gathering {
         OPEN, CLOSED, CANCELLED, COMPLETED
     }
 
+    @Column(name = "host_completed", nullable = false)
+    private boolean hostCompleted = false;
+
+    public void completeByHost() {
+        this.hostCompleted = true;
+    }
+
+    public void updateStatus(Status status) {
+    this.status = status;
+    }
+
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -102,4 +114,5 @@ public class Gathering {
     if (tags != null) this.tags = tags;
     if (status != null) this.status = Status.valueOf(status);
     }
+  
 }

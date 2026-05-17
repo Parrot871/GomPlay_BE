@@ -204,4 +204,35 @@ public class GatheringService {
 
         return new GatheringParticipantResponse(participant);
     }
+
+    @Transactional
+    public void completeGathering(Long userId, Long gatheringId) {
+         UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
+               .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+         Gathering gathering = gatheringRepository.findById(gatheringId)
+              .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+        // 방장인 경우
+         if (gathering.getHost().getId().equals(user.getId())) {
+         gathering.completeByHost();
+         } else {
+                // 참여자인 경우
+                GatheringParticipant participant = gatheringParticipantRepository
+                  .findByGathering_IdAndUser_Id(gatheringId, user.getId())
+                 .orElseThrow(() -> new IllegalArgumentException("참여자를 찾을 수 없습니다."));
+         participant.complete();
+        }
+
+        // 전원 완료 여부 체크 (방장 + 모든 참여자)
+         boolean hostCompleted = gathering.isHostCompleted();
+         boolean allParticipantsCompleted = gatheringParticipantRepository
+                 .findByGathering_Id(gatheringId)
+                 .stream()
+                 .allMatch(GatheringParticipant::isCompleted);
+
+        if (hostCompleted && allParticipantsCompleted) {
+                gathering.updateStatus(Gathering.Status.COMPLETED);
+        }
+        }
 }
