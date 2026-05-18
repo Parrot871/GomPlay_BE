@@ -3,6 +3,7 @@ package com.example.gomplay.domain.chat.service;
 
 import com.example.gomplay.domain.chat.dto.ChatMessageDto;
 import com.example.gomplay.domain.chat.dto.ChatRoomResponse;
+import com.example.gomplay.domain.chat.dto.ChatRoomDetailResponse;
 import com.example.gomplay.domain.chat.entity.ChatMessage;
 import com.example.gomplay.domain.chat.entity.ChatRoom;
 import com.example.gomplay.domain.chat.repository.ChatMessageRepository;
@@ -36,27 +37,23 @@ public class ChatService {
 
     // 채팅방 입장 (메시지 내역 + 읽음 처리)
     @Transactional
-    public ChatRoomResponse enterRoom(Long userId, Long roomId) {
+    public ChatRoomDetailResponse enterRoom(Long userId, Long roomId) {
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("채팅방을 찾을 수 없습니다."));
 
-        // 참여자 확인
         validateParticipant(room, userId);
 
-        // 안 읽음
         long unreadCount = chatMessageRepository.countByRoom_IdAndIsReadFalseAndSender_IdNot(roomId, userId);
 
-        // 읽음 처리
         chatMessageRepository.markAsRead(roomId, userId);
 
-        // 메시지 내역
         List<ChatMessageDto> messages = chatMessageRepository
                 .findByRoom_IdOrderBySentAtAsc(roomId)
                 .stream()
                 .map(ChatMessageDto::of)
                 .collect(Collectors.toList());
 
-        return ChatRoomResponse.of(room, userId, messages, unreadCount);
+        return ChatRoomDetailResponse.of(room, userId, messages, unreadCount);  // 여기
     }
 
     // 메시지 전송
@@ -169,14 +166,14 @@ public class ChatService {
         return chatRoomRepository.findByUserA_IdOrUserB_Id(userId, userId)
                 .stream()
                 .map(room -> {
-                    List<ChatMessageDto> messages = chatMessageRepository
-                            .findByRoom_IdOrderBySentAtAsc(room.getId())
-                            .stream()
+                    // 마지막 메시지 1개만 조회
+                    ChatMessageDto lastMessage = chatMessageRepository
+                            .findTopByRoom_IdOrderBySentAtDesc(room.getId())
                             .map(ChatMessageDto::of)
-                            .collect(Collectors.toList());
+                            .orElse(null);
                     long unreadCount = chatMessageRepository
                             .countByRoom_IdAndIsReadFalseAndSender_IdNot(room.getId(), userId);
-                    return ChatRoomResponse.of(room, userId, messages, unreadCount);
+                    return ChatRoomResponse.of(room, userId, lastMessage, unreadCount);
                 })
                 .collect(Collectors.toList());
     }

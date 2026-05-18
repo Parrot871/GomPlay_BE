@@ -1,4 +1,3 @@
-
 package com.example.gomplay.domain.chat.dto;
 
 import com.example.gomplay.domain.chat.entity.ChatRoom;
@@ -15,7 +14,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatRoomResponse {
+public class ChatRoomDetailResponse {
     private Long roomId;
     private Long matchResultId;
     private Long opponentId;
@@ -25,21 +24,20 @@ public class ChatRoomResponse {
     private long unreadCount;
     private boolean isCompleteButtonVisible;
     private LocalDateTime createdAt;
-    private String lastMessageContent;
-    private LocalDateTime lastMessageAt;
+    private List<ChatMessageDto> messages;  // 전체 메시지
 
-    public static ChatRoomResponse of(ChatRoom room, Long myId, ChatMessageDto lastMessage, long unreadCount) {
+    public static ChatRoomDetailResponse of(ChatRoom room, Long myId, List<ChatMessageDto> messages, long unreadCount) {
         MatchResult matchResult = room.getMatchResult();
 
         boolean iAmA = room.getUserA().getId().equals(myId);
         var opponent = iAmA ? room.getUserB() : room.getUserA();
 
         boolean isCompleteButtonVisible = room.getCreatedAt()
-                .plusHours(12)  // 1분 → 12시간으로 수정도 같이
+                .plusHours(12)
                 .isBefore(LocalDateTime.now())
                 && matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS;
 
-        return ChatRoomResponse.builder()
+        return ChatRoomDetailResponse.builder()
                 .roomId(room.getId())
                 .matchResultId(matchResult.getId())
                 .opponentId(opponent.getId())
@@ -49,9 +47,7 @@ public class ChatRoomResponse {
                 .unreadCount(unreadCount)
                 .isCompleteButtonVisible(isCompleteButtonVisible)
                 .createdAt(room.getCreatedAt())
-                .lastMessageContent(lastMessage != null ? lastMessage.getContent() : null)
-                .lastMessageAt(lastMessage != null ? lastMessage.getSentAt() : null)
+                .messages(messages)
                 .build();
     }
 }
-

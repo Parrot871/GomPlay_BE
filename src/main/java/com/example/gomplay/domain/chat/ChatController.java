@@ -3,6 +3,7 @@ package com.example.gomplay.domain.chat;
 
 import com.example.gomplay.domain.chat.dto.ChatRoomResponse;
 import com.example.gomplay.domain.chat.dto.SendMessageRequest;
+import com.example.gomplay.domain.chat.dto.ChatRoomDetailResponse;
 import com.example.gomplay.domain.chat.service.ChatService;
 import com.example.gomplay.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class ChatController {
 
     // 채팅방 입장 (메시지 내역 + 읽음 처리)
     @GetMapping("/room/{roomId}")
-    public ResponseEntity<ApiResponse<ChatRoomResponse>> enterRoom(
+    public ResponseEntity<ApiResponse<ChatRoomDetailResponse>> enterRoom(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long roomId) {
         return ResponseEntity.ok(ApiResponse.success(
