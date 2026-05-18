@@ -1,3 +1,4 @@
+
 package com.example.gomplay.domain.matching.entity;
 
 import com.example.gomplay.domain.user.entity.UserProfile;
@@ -39,6 +40,13 @@ public class MatchResult {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "user_a_completed", nullable = false)
+    private boolean userACompleted = false;
+
+    @Column(name = "user_b_completed", nullable = false)
+    private boolean userBCompleted = false;
+
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -49,6 +57,21 @@ public class MatchResult {
 
     public enum MatchResultStatus{
         IN_PROGRESS, COMPLETED, CANCELLED
+    }
+
+    // 내가 완료 버튼 눌렀을 때
+    public boolean markCompleted(Long userId) {
+        if (this.userA.getId().equals(userId)) {
+            this.userACompleted = true;
+        } else {
+            this.userBCompleted = true;
+        }
+        // 둘 다 눌렀으면 true 반환
+        if (this.userACompleted && this.userBCompleted) {
+            complete();
+            return true;
+        }
+        return false;
     }
 
     public static MatchResult create(MatchRequest matchRequest, UserProfile userA, UserProfile userB) {
@@ -69,3 +92,4 @@ public class MatchResult {
         this.status = MatchResultStatus.CANCELLED;
     }
 }
+
