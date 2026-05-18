@@ -33,7 +33,7 @@ public class ChatRoomDetailResponse {
         var opponent = iAmA ? room.getUserB() : room.getUserA();
 
         boolean isCompleteButtonVisible = room.getCreatedAt()
-                .plusHours(12)
+                .plusMinutes(1)
                 .isBefore(LocalDateTime.now())
                 && matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS;
 

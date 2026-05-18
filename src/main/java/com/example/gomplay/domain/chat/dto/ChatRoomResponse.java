@@ -35,7 +35,7 @@ public class ChatRoomResponse {
         var opponent = iAmA ? room.getUserB() : room.getUserA();
 
         boolean isCompleteButtonVisible = room.getCreatedAt()
-                .plusHours(12)  // 1분 → 12시간으로 수정도 같이
+                .plusMinutes(1)  // 1분 → 12시간으로 수정도 같이
                 .isBefore(LocalDateTime.now())
                 && matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS;
 
