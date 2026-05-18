@@ -1,3 +1,4 @@
+
 package com.example.gomplay.domain.chat.dto;
 
 import com.example.gomplay.domain.chat.entity.ChatRoom;
@@ -21,20 +22,21 @@ public class ChatRoomResponse {
     private String opponentName;
     private String opponentProfileImageUrl;
     private String matchStatus;        // IN_PROGRESS or COMPLETED
+    private long unreadCount;
     private boolean isCompleteButtonVisible; // 12시간 지났는지
     private LocalDateTime createdAt;
     private List<ChatMessageDto> messages;
 
-    public static ChatRoomResponse of(ChatRoom room, Long myId, List<ChatMessageDto> messages) {
+    public static ChatRoomResponse of(ChatRoom room, Long myId, List<ChatMessageDto> messages, long unreadCount) {
         MatchResult matchResult = room.getMatchResult();
 
         // 상대방 정보
         boolean iAmA = room.getUserA().getId().equals(myId);
         var opponent = iAmA ? room.getUserB() : room.getUserA();
 
-        // 12시간 지났는지 체크
+        // 1분 지났는지 체크  => 12시간으로 수정해야
         boolean isCompleteButtonVisible = room.getCreatedAt()
-                .plusHours(12)
+                .plusMinutes(1)
                 .isBefore(LocalDateTime.now())
                 && matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS;
 
@@ -45,9 +47,11 @@ public class ChatRoomResponse {
                 .opponentName(opponent.getName())
                 .opponentProfileImageUrl(opponent.getProfileImageUrl())
                 .matchStatus(matchResult.getStatus().name())
+                .unreadCount(unreadCount)
                 .isCompleteButtonVisible(isCompleteButtonVisible)
                 .createdAt(room.getCreatedAt())
                 .messages(messages)
                 .build();
     }
 }
+
