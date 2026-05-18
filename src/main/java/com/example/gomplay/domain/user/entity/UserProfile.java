@@ -101,4 +101,8 @@ public class UserProfile {
     public void incrementNoShowCount() {
     this.noShowCount += 1;  
     }
+
+    public void updateMannerTemperature(BigDecimal temperature) {
+    this.mannerTemperature = temperature;
+}
 }

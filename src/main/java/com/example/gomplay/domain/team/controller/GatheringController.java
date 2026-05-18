@@ -7,6 +7,7 @@ import com.example.gomplay.domain.team.dto.GatheringCreateRequest;
 import com.example.gomplay.domain.team.dto.GatheringCreateResponse;
 import com.example.gomplay.domain.team.dto.GatheringJoinResponse;
 import com.example.gomplay.domain.team.dto.GatheringDetailResponse;
+import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
 import com.example.gomplay.domain.team.service.GatheringRecommendService;
 import com.example.gomplay.domain.team.service.GatheringService;
 import lombok.RequiredArgsConstructor;
@@ -91,8 +92,24 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
 }
 
     @GetMapping("/recommend")
-public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
+    public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
         @AuthenticationPrincipal Long userId) {
     return ResponseEntity.ok(gatheringRecommendService.getRecommendedGatherings(userId));
-}   
+    } 
+
+
+    @PatchMapping("/{gatheringId}/complete")
+    public ResponseEntity<Void> completeGathering(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    gatheringService.completeGathering(userId, gatheringId);
+    return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<GatheringHistoryResponse>> getGatheringHistory(
+            @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(gatheringService.getGatheringHistory(userId));
+}
+
 }

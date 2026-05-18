@@ -69,8 +69,20 @@ public class Gathering {
     private LocalDateTime updatedAt;
 
     public enum Status {
-        OPEN, CLOSED, CANCELLED
+        OPEN, CLOSED, CANCELLED, COMPLETED
     }
+
+    @Column(name = "host_completed", nullable = false)
+    private boolean hostCompleted = false;
+
+    public void completeByHost() {
+        this.hostCompleted = true;
+    }
+
+    public void updateStatus(Status status) {
+    this.status = status;
+    }
+
 
     @PrePersist
     public void prePersist() {
@@ -102,4 +114,5 @@ public class Gathering {
     if (tags != null) this.tags = tags;
     if (status != null) this.status = Status.valueOf(status);
     }
+  
 }
