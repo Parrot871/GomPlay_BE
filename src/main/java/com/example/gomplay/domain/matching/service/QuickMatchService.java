@@ -1,5 +1,9 @@
+
+
+
 package com.example.gomplay.domain.matching.service;
 
+import com.example.gomplay.domain.chat.entity.ChatRoom;
 import com.example.gomplay.domain.matching.dto.CandidateResponse;
 import com.example.gomplay.domain.matching.dto.MatchRequestDto;
 import com.example.gomplay.domain.matching.dto.MatchRequestResponse;
@@ -10,6 +14,7 @@ import com.example.gomplay.domain.matching.entity.QuickMatchLog;
 import com.example.gomplay.domain.matching.repository.MatchRequestRepository;
 import com.example.gomplay.domain.matching.repository.MatchResultRepository;
 import com.example.gomplay.domain.matching.repository.QuickMatchLogRepository;
+import com.example.gomplay.domain.chat.repository.ChatRoomRepository;
 import com.example.gomplay.domain.point.service.PointService;
 import com.example.gomplay.domain.survey.entity.UserSurvey;
 import com.example.gomplay.domain.survey.entity.UserSurveyExercise;
@@ -41,6 +46,7 @@ public class QuickMatchService {
     private final WebSocketSessionRegistry sessionRegistry;
     private final MatchScoreCalculator matchScoreCalculator;
     private final MatchResultRepository matchResultRepository;
+    private final ChatRoomRepository chatRoomRepository;
     private final PointService pointService;
 
     @Transactional
@@ -172,11 +178,12 @@ public class QuickMatchService {
         }
 
         matchRequest.accept();
-        matchResultRepository.save(MatchResult.create(
+        MatchResult result = matchResultRepository.save(MatchResult.create(
                 matchRequest,
                 matchRequest.getRequester(),
                 opponent
         ));
+        chatRoomRepository.save(ChatRoom.create(result, matchRequest.getRequester(), opponent));
         UserProfile requester = matchRequest.getRequester();
 
         // 첫 매칭 여부 확인
