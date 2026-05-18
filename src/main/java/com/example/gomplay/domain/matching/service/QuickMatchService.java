@@ -181,20 +181,20 @@ public class QuickMatchService {
 
         // 첫 매칭 여부 확인
         if (requester.getMatchCount() == 0) {
-                pointService.addPoint(requester, 30, "first_match", null);
+            pointService.addPoint(requester, 30, "first_match", null);
         } else {
-                pointService.addPoint(requester, 5, "match_complete", null);
+            pointService.addPoint(requester, 5, "match_complete", null);
         }
 
         if (opponent.getMatchCount() == 0) {
-                 pointService.addPoint(opponent, 30, "first_match", null);
+            pointService.addPoint(opponent, 30, "first_match", null);
         } else {
-        pointService.addPoint(opponent, 5, "match_complete", null);
+            pointService.addPoint(opponent, 5, "match_complete", null);
         }
 
 // matchCount 증가
-requester.incrementMatchCount();
-opponent.incrementMatchCount();
+        requester.incrementMatchCount();
+        opponent.incrementMatchCount();
 
         quickMatchLogRepository.findTopByUserProfileIdAndStatus(
                         opponent.getId(), QuickMatchLog.MatchStatus.WAITING)
