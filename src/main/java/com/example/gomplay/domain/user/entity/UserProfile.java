@@ -104,5 +104,12 @@ public class UserProfile {
 
     public void updateMannerTemperature(BigDecimal temperature) {
     this.mannerTemperature = temperature;
-}
+    }
+
+    @Column(name = "matching_restricted_until")
+    private LocalDateTime matchingRestrictedUntil;
+
+    public void restrictMatching(LocalDateTime until) {
+        this.matchingRestrictedUntil = until;
+    }
 }

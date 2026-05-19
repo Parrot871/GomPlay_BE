@@ -50,6 +50,11 @@ public class Notification {
     }
 
     public enum NotificationType {
-        match_request, match_accepted, match_rejected, gathering, review, point
+    match_request, match_accepted, match_rejected, 
+    gathering, review, point,
+    gathering_request,   // 모집글 신청 도착
+    review_available,    // 평가 가능
+    match_end_confirm,   // 매칭 종료 확인
+    match_auto_ended     // 매칭 자동 종료 처리
     }
 }
