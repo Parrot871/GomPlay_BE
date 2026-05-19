@@ -54,9 +54,9 @@ public class ReviewService {
             delta += 0.5;
         }
 
-        // 아쉬워요 태그 1개당 -0.5도
-        if (request.getBadTags() != null) {
-            delta -= request.getBadTags().size() * 0.5;
+        // 아쉬워요 태그 하나라도 있으면 -0.5도
+        if (request.getBadTags() != null && !request.getBadTags().isEmpty()) {
+            delta -= 0.5;
         }
 
         // 노쇼 -3도
