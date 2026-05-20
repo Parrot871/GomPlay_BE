@@ -1,6 +1,3 @@
-
-
-
 package com.example.gomplay.domain.matching.service;
 
 import com.example.gomplay.domain.chat.entity.ChatRoom;
@@ -8,6 +5,7 @@ import com.example.gomplay.domain.matching.dto.CandidateResponse;
 import com.example.gomplay.domain.matching.dto.MatchRequestDto;
 import com.example.gomplay.domain.matching.dto.MatchRequestResponse;
 import com.example.gomplay.domain.matching.dto.MatchingToggleResponse;
+import com.example.gomplay.domain.matching.dto.AcceptMatchResponse;
 import com.example.gomplay.domain.matching.entity.MatchRequest;
 import com.example.gomplay.domain.matching.entity.MatchResult;
 import com.example.gomplay.domain.matching.entity.QuickMatchLog;
@@ -31,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -155,7 +154,7 @@ public class QuickMatchService {
     }
 
     @Transactional
-    public void acceptMatch(Long userId, Long matchRequestId) {
+    public AcceptMatchResponse acceptMatch(Long userId, Long matchRequestId) {
         UserProfile opponent = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("프로필을 찾을 수 없습니다."));
 
@@ -183,7 +182,7 @@ public class QuickMatchService {
                 matchRequest.getRequester(),
                 opponent
         ));
-        chatRoomRepository.save(ChatRoom.create(result, matchRequest.getRequester(), opponent));
+        ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.create(result, matchRequest.getRequester(), opponent));
         UserProfile requester = matchRequest.getRequester();
 
         // 첫 매칭 여부 확인
@@ -231,12 +230,17 @@ public class QuickMatchService {
             );
         });
 
+        Map<String, Long> wsData = Map.of(
+                "matchRequestId", matchRequestId,
+                "chatRoomId", chatRoom.getId()
+        );
         // 요청자한테 수락 푸시
         messagingTemplate.convertAndSendToUser(
                 matchRequest.getRequester().getId().toString(),
                 "/queue/match",
-                WsMessage.builder().type("MATCH_ACCEPTED").data(matchRequestId).build()
+                WsMessage.builder().type("MATCH_ACCEPTED").data(wsData).build()
         );
+        return new AcceptMatchResponse(chatRoom.getId());
     }
 
     @Transactional

@@ -37,11 +37,11 @@ public class QuickMatchController {
     }
 
     @PatchMapping("/request/{id}/accept")
-    public ResponseEntity<ApiResponse<Void>> acceptMatch(
+    public ResponseEntity<ApiResponse<AcceptMatchResponse>> acceptMatch(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long id) {
-        quickMatchService.acceptMatch(userId, id);
-        return ResponseEntity.ok(ApiResponse.success("매칭이 수락되었습니다.", null));
+        AcceptMatchResponse response = quickMatchService.acceptMatch(userId, id);
+        return ResponseEntity.ok(ApiResponse.success("매칭이 수락되었습니다.", response));
     }
 
     @PatchMapping("/request/{id}/reject")
