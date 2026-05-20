@@ -42,7 +42,11 @@ public class NotificationService {
                     .findByUserProfile_IdAndTypeInOrderByCreatedAtDesc(
                     user.getId(),
                     List.of(
-                            Notification.NotificationType.gathering
+                            Notification.NotificationType.gathering,
+                            Notification.NotificationType.gathering_request,
+                            Notification.NotificationType.review_available,
+                            Notification.NotificationType.match_end_confirm,
+                            Notification.NotificationType.match_auto_ended
                     )
             );
 } else {

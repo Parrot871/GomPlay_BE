@@ -6,6 +6,7 @@ import com.example.gomplay.domain.review.entity.Review;
 import com.example.gomplay.domain.review.repository.ReviewRepository;
 import com.example.gomplay.domain.report.entity.Report;
 import com.example.gomplay.domain.report.repository.ReportRepository;
+import com.example.gomplay.domain.point.service.PointService;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +25,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserProfileRepository userProfileRepository;
     private final ReportRepository reportRepository;
+    private final PointService pointService;
 
     // 평가 제출
     @Transactional
@@ -33,14 +36,14 @@ public class ReviewService {
         UserProfile reviewee = userProfileRepository.findById(request.getRevieweeId())
                 .orElseThrow(() -> new IllegalArgumentException("평가 대상자를 찾을 수 없습니다."));
 
-    // 중복 평가 방지
-    if (request.getMatchResultId() != null &&
-        reviewRepository.existsByReviewer_IdAndMatchResultId(reviewer.getId(), request.getMatchResultId())) {
-         throw new IllegalArgumentException("이미 평가한 매칭입니다.");
+        // 중복 평가 방지
+        if (request.getMatchResultId() != null &&
+            reviewRepository.existsByReviewer_IdAndMatchResultId(reviewer.getId(), request.getMatchResultId())) {
+             throw new IllegalArgumentException("이미 평가한 매칭입니다.");
         }
-    if (request.getGatheringId() != null &&
-        reviewRepository.existsByReviewer_IdAndGatheringId(reviewer.getId(), request.getGatheringId())) {
-        throw new IllegalArgumentException("이미 평가한 모임입니다.");
+        if (request.getGatheringId() != null &&
+            reviewRepository.existsByReviewer_IdAndGatheringId(reviewer.getId(), request.getGatheringId())) {
+            throw new IllegalArgumentException("이미 평가한 모임입니다.");
         }
 
         // 매너온도 변동 계산
@@ -51,9 +54,9 @@ public class ReviewService {
             delta += 0.5;
         }
 
-        // 아쉬워요 태그 1개당 -0.5도
-        if (request.getBadTags() != null) {
-            delta -= request.getBadTags().size() * 0.5;
+        // 아쉬워요 태그 하나라도 있으면 -0.5도
+        if (request.getBadTags() != null && !request.getBadTags().isEmpty()) {
+            delta -= 0.5;
         }
 
         // 노쇼 -3도
@@ -70,7 +73,17 @@ public class ReviewService {
         // 노쇼 처리
         if (request.isNoShow()) {
             reviewee.incrementNoShowCount();
+    
+        // 노쇼 패널티 포인트 차감
+        int noShowCount = reviewee.getNoShowCount();
+        if (noShowCount <= 4) {
+        pointService.addPoint(reviewee, -(noShowCount * 10), "no_show", null);
         }
+        // 5회 이상은 매칭 제한 7일 처리
+       if (noShowCount >= 5) {
+        reviewee.restrictMatching(LocalDateTime.now().plusDays(7));
+      }
+}
 
         // 좋았어요/아쉬워요 태그 저장
         String goodTags = request.getGoodTags() != null ?
@@ -90,6 +103,9 @@ public class ReviewService {
                 .build();
 
         reviewRepository.save(review);
+
+        // 리뷰 작성 포인트 지급 +5P
+        pointService.addPoint(reviewer, 5, "review", null);
 
         // 신고 처리
         if (request.getReportCategories() != null && !request.getReportCategories().isEmpty()) {
