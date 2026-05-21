@@ -139,6 +139,8 @@ public class QuickMatchService {
         MatchRequestResponse response = MatchRequestResponse.builder()
                 .matchRequestId(matchRequest.getId())
                 .opponentId(opponent.getId())
+                .opponentName(requester.getName())
+                .opponentProfileImageUrl(requester.getProfileImageUrl())
                 .status(matchRequest.getStatus().name())
                 .expiresAt(matchRequest.getExpiresAt())
                 .build();
