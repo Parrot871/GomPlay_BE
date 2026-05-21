@@ -29,9 +29,11 @@ public interface MatchRequestRepository extends JpaRepository<MatchRequest, Long
     @Query("SELECT m FROM MatchRequest m WHERE m.id = :id")
     Optional<MatchRequest> findByIdWithLock(@Param("id") Long id);
 
-    // 나 또는 상대방이 이미 ACCEPTED 됐는지 확인
-    @Query("SELECT COUNT(m) > 0 FROM MatchRequest m WHERE " +
-            "(m.requester.id = :userId OR m.opponent.id = :userId) " +
-            "AND m.status = 'ACCEPTED'")
+    // 현재 진행 중인 매칭(MatchResult가 IN_PROGRESS)이 있는지 확인
+    @Query("SELECT COUNT(m) > 0 FROM MatchRequest m " +
+            "JOIN MatchResult r ON r.matchRequest.id = m.id " +
+            "WHERE (m.requester.id = :userId OR m.opponent.id = :userId) " +
+            "AND m.status = 'ACCEPTED' " +
+            "AND r.status = 'IN_PROGRESS'")
     boolean existsAcceptedMatchByUserId(@Param("userId") Long userId);
 }
