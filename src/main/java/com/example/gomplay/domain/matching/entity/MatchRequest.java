@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -33,7 +34,7 @@ public class MatchRequest {
     private MatchRequestStatus status;
 
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -52,7 +53,7 @@ public class MatchRequest {
                 .requester(requester)
                 .opponent(opponent)
                 .status(MatchRequestStatus.PENDING)
-                .expiresAt(LocalDateTime.now().plusSeconds(30))
+                .expiresAt(Instant.now().plusSeconds(30))
                 .build();
     }
 
@@ -69,6 +70,6 @@ public class MatchRequest {
     }
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(this.expiresAt);
+        return Instant.now().isAfter(this.expiresAt);
     }
 }

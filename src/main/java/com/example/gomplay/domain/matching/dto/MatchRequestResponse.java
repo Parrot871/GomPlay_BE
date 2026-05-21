@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Builder
@@ -17,5 +17,5 @@ public class MatchRequestResponse {
     private String opponentName;
     private String opponentProfileImageUrl;
     private String status;
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 }
