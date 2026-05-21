@@ -1,5 +1,6 @@
 package com.example.gomplay.domain.user.controller;
 
+import com.example.gomplay.domain.user.dto.PartnerProfileResponse;
 import com.example.gomplay.domain.user.dto.PasswordUpdateRequest;
 import com.example.gomplay.domain.user.dto.UserProfileResponse;
 import com.example.gomplay.domain.user.dto.UserProfileUpdateRequest;
@@ -45,10 +46,18 @@ public class UserProfileController {
         return ResponseEntity.ok("비밀번호가 변경되었습니다.");
     }
 
+    // 프로필 이미지 업로드
     @PostMapping("/me/profile-image")
     public ResponseEntity<ProfileImageResponse> uploadProfileImage(
         @AuthenticationPrincipal Long userId,
         @RequestParam("file") MultipartFile file) throws IOException {
     return ResponseEntity.ok(userProfileService.uploadProfileImage(userId, file));
-}
+    }
+
+    // 상대방 프로필 조회
+    @GetMapping("/{userProfileId}/profile")
+    public ResponseEntity<PartnerProfileResponse> getUserProfile(
+        @PathVariable Long userProfileId) {
+    return ResponseEntity.ok(userProfileService.getUserProfile(userProfileId));
+    }
 }
