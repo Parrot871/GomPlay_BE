@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -24,7 +24,7 @@ public class MatchRequestScheduler {
         List<MatchRequest> expiredRequests = matchRequestRepository
                 .findByStatusAndExpiresAtBefore(
                         MatchRequest.MatchRequestStatus.PENDING,
-                        LocalDateTime.now()
+                        Instant.now()
                 );
 
         expiredRequests.forEach(MatchRequest::timeout);

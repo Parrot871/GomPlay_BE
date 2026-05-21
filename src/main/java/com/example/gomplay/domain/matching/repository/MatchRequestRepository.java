@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +21,7 @@ public interface MatchRequestRepository extends JpaRepository<MatchRequest, Long
     // 만료된 PENDING 요청 조회 (스케줄러용)
     List<MatchRequest> findByStatusAndExpiresAtBefore(
             MatchRequest.MatchRequestStatus status,
-            LocalDateTime dateTime
+            Instant dateTime
     );
 
     // 동시성 처리용 락
