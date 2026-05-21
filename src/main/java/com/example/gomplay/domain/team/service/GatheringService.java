@@ -26,6 +26,7 @@ import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
 
 import java.util.stream.Collectors;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.springframework.data.domain.Page;
@@ -155,7 +156,10 @@ public class GatheringService {
     public Page<GatheringListResponse> getGatheringList(
             String sportType, String difficulty, int page, int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("scheduledAt").ascending());
+            // 부스트된 글 먼저, 그 다음 scheduledAt 순
+            Pageable pageable = PageRequest.of(page, size, 
+            Sort.by("isBoosted").descending()
+            .and(Sort.by("scheduledAt").ascending()));
 
         if (sportType != null && difficulty != null) {
             return gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable)
@@ -275,5 +279,28 @@ public class GatheringService {
                         return new GatheringHistoryResponse(gathering, isReviewed);
                 })
             .   collect(Collectors.toList());
+        }
+
+        @Transactional
+        public void boostGathering(Long userId, Long gatheringId) {
+        UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        Gathering gathering = gatheringRepository.findById(gatheringId)
+                .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+        if (!gathering.getHost().getId().equals(user.getId())) {
+                throw new IllegalArgumentException("모집글 작성자만 부스트할 수 있습니다.");
+        }
+
+        if (user.getPointBalance() < 25) {
+        throw new IllegalArgumentException("포인트가 부족합니다.");
+        }
+
+        // 포인트 차감 -25P
+        pointService.addPoint(user, -25, "boost", gatheringId);
+
+        // 부스트 설정 (24시간)
+        gathering.boost(LocalDateTime.now().plusHours(24));
         }
 }

@@ -24,6 +24,7 @@ public interface GatheringRepository extends JpaRepository<Gathering, Long> {
     List<Gathering> findByParticipantIdAndStatus(@Param("userId") Long userId, @Param("status") Gathering.Status status);
 
     List<Gathering> findByStatusInAndScheduledEndAtBefore(List<Gathering.Status> statuses, LocalDateTime dateTime);
+    List<Gathering> findByIsBoostedTrueAndBoostExpiredAtBefore(LocalDateTime dateTime);
 
 }
 

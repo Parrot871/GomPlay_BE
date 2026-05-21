@@ -83,6 +83,17 @@ public class Gathering {
     this.status = status;
     }
 
+    @Column(name = "is_boosted", nullable = false)
+    private boolean isBoosted = false;
+
+    @Column(name = "boost_expired_at")
+    private LocalDateTime boostExpiredAt;
+
+    public void boost(LocalDateTime expiredAt) {
+    this.isBoosted = true;
+    this.boostExpiredAt = expiredAt;
+    }
+
 
     @PrePersist
     public void prePersist() {

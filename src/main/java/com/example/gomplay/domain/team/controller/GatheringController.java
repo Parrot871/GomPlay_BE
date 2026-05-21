@@ -110,6 +110,14 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
     public ResponseEntity<List<GatheringHistoryResponse>> getGatheringHistory(
             @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(gatheringService.getGatheringHistory(userId));
-}
+    }
+
+    @PostMapping("/{gatheringId}/boost")
+    public ResponseEntity<Void> boostGathering(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long gatheringId) {
+        gatheringService.boostGathering(userId, gatheringId);
+        return ResponseEntity.ok().build();
+    }
 
 }
