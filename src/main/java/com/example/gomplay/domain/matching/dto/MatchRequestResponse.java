@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class MatchRequestResponse {
     private Long matchRequestId;
     private Long opponentId;
+    private String opponentName;
+    private String opponentProfileImageUrl;
     private String status;
     private LocalDateTime expiresAt;
 }
