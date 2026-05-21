@@ -65,8 +65,8 @@ public class GatheringService {
 
         Gathering saved = gatheringRepository.save(gathering);
 
-        // 모집글 등록 포인트 지급 +5P
-        pointService.addPoint(host, 5, "gathering", saved.getId());
+        // 모집글 등록 포인트 지급 +2P
+        pointService.addPoint(host, 2, "gathering", saved.getId());
 
         return new GatheringCreateResponse(saved);
     }
@@ -242,7 +242,12 @@ public class GatheringService {
 
         if (hostCompleted && allParticipantsCompleted) {
                 gathering.updateStatus(Gathering.Status.COMPLETED);
-        }
+
+                // 운동 완료 포인트 지급 +4P
+                pointService.addPoint(user, 4, "exercise_complete", null);
+                }
+        // 개인 완료 시 +4p 지급        
+        pointService.addPoint(user, 4, "exercise_complete", null);
         }
 
 

@@ -7,5 +7,6 @@ import java.util.List;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsByReviewer_IdAndMatchResultId(Long reviewerId, Long matchResultId);
     boolean existsByReviewer_IdAndGatheringId(Long reviewerId, Long gatheringId);
+    boolean existsByReviewer_IdAndReviewee_Id(Long reviewerId, Long revieweeId);
     List<Review> findByReviewee_Id(Long revieweeId);
 }
