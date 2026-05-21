@@ -43,7 +43,7 @@ public class GatheringScheduler {
     @Transactional
     public void expireBoost() {
         List<Gathering> boostedGatherings = gatheringRepository
-            .findByIsBoostedTrueAndBoostExpiredAtBefore(LocalDateTime.now());
+            .findByBoostedTrueAndBoostExpiredAtBefore(LocalDateTime.now());
 
     for (Gathering gathering : boostedGatherings) {
         gathering.boost(null);

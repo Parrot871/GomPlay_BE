@@ -70,9 +70,10 @@ public class GatheringController {
     public ResponseEntity<Page<GatheringListResponse>> getGatheringList(
         @RequestParam(required = false) String sportType,
         @RequestParam(required = false) String difficulty,
+        @RequestParam(required = false) String status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
-    return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, page, size));
+    return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, status, page, size));
     }
 
     @PatchMapping("/{gatheringId}/participants/{participantId}/accept")
@@ -110,14 +111,14 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
     public ResponseEntity<List<GatheringHistoryResponse>> getGatheringHistory(
             @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(gatheringService.getGatheringHistory(userId));
-    }
+}
 
     @PostMapping("/{gatheringId}/boost")
     public ResponseEntity<Void> boostGathering(
-            @AuthenticationPrincipal Long userId,
-            @PathVariable Long gatheringId) {
-        gatheringService.boostGathering(userId, gatheringId);
-        return ResponseEntity.ok().build();
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    gatheringService.boostGathering(userId, gatheringId);
+    return ResponseEntity.ok().build();
     }
 
 }
