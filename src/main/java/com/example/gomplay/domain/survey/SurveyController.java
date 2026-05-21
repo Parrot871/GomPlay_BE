@@ -2,6 +2,8 @@ package com.example.gomplay.domain.survey;
 
 import com.example.gomplay.domain.survey.dto.SurveyRequest;
 import com.example.gomplay.domain.survey.dto.SurveyResponse;
+import com.example.gomplay.domain.survey.dto.ReportResponse;
+import com.example.gomplay.domain.survey.service.ReportService;
 import com.example.gomplay.domain.survey.service.SurveyService;
 import com.example.gomplay.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class SurveyController {
 
     private final SurveyService surveyService;
+    private final ReportService reportService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<SurveyResponse>> saveSurvey(
@@ -34,5 +37,11 @@ public class SurveyController {
             @AuthenticationPrincipal Long userId,
             @RequestBody SurveyRequest request) {
         return ResponseEntity.ok(ApiResponse.success("설문이 수정되었습니다.", surveyService.updateSurvey(userId, request)));
+    }
+
+    @GetMapping("/report")
+    public ResponseEntity<ApiResponse<ReportResponse>> getReport(
+            @AuthenticationPrincipal Long userId) {
+        return ResponseEntity.ok(ApiResponse.success("레포트 조회 성공", reportService.generateReport(userId)));
     }
 }
