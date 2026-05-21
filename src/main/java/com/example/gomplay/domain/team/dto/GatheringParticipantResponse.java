@@ -9,6 +9,8 @@ public class GatheringParticipantResponse {
     private Long id;
     private Long gatheringId;
     private Long userId;
+    private String userName;
+    private String userProfileImageUrl;
     private String status;
     private LocalDateTime updatedAt;
 
@@ -16,6 +18,8 @@ public class GatheringParticipantResponse {
         this.id = participant.getId();
         this.gatheringId = participant.getGathering().getId();
         this.userId = participant.getUser().getId();
+        this.userName = participant.getUser().getName();
+        this.userProfileImageUrl = participant.getUser().getProfileImageUrl();
         this.status = participant.getStatus().name();
         this.updatedAt = participant.getUpdatedAt();
     }
