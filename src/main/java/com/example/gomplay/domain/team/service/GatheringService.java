@@ -315,4 +315,23 @@ public class GatheringService {
         // 부스트 설정 (24시간)
         gathering.boost(LocalDateTime.now().plusHours(24));
         }
+
+        //모집글 신청자 목록 조회(방장만 가능)
+        @Transactional(readOnly = true)
+        public List<GatheringParticipantResponse> getParticipants(Long userId, Long gatheringId) {
+                UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        Gathering gathering = gatheringRepository.findById(gatheringId)
+                .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+        if (!gathering.getHost().getId().equals(host.getId())) {
+        throw new IllegalArgumentException("모집글 작성자만 조회할 수 있습니다.");
+        }
+
+        return gatheringParticipantRepository.findByGathering_Id(gatheringId)
+                .stream()
+                .map(GatheringParticipantResponse::new)
+                .collect(Collectors.toList());
+        }
 }

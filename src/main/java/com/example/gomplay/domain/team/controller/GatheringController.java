@@ -77,20 +77,20 @@ public class GatheringController {
     }
 
     @PatchMapping("/{gatheringId}/participants/{participantId}/accept")
-public ResponseEntity<GatheringParticipantResponse> acceptParticipant(
+    public ResponseEntity<GatheringParticipantResponse> acceptParticipant(
         @AuthenticationPrincipal Long userId,
         @PathVariable Long gatheringId,
         @PathVariable Long participantId) {
     return ResponseEntity.ok(gatheringService.acceptParticipant(userId, gatheringId, participantId));
-}
+    }
 
     @PatchMapping("/{gatheringId}/participants/{participantId}/reject")
-public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
+    public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
         @AuthenticationPrincipal Long userId,
         @PathVariable Long gatheringId,
         @PathVariable Long participantId) {
     return ResponseEntity.ok(gatheringService.rejectParticipant(userId, gatheringId, participantId));
-}
+    }
 
     @GetMapping("/recommend")
     public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
@@ -111,7 +111,7 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
     public ResponseEntity<List<GatheringHistoryResponse>> getGatheringHistory(
             @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(gatheringService.getGatheringHistory(userId));
-}
+    }   
 
     @PostMapping("/{gatheringId}/boost")
     public ResponseEntity<Void> boostGathering(
@@ -119,6 +119,13 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
         @PathVariable Long gatheringId) {
     gatheringService.boostGathering(userId, gatheringId);
     return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{gatheringId}/participants")
+    public ResponseEntity<List<GatheringParticipantResponse>> getParticipants(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    return ResponseEntity.ok(gatheringService.getParticipants(userId, gatheringId));
     }
 
 }
