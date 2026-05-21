@@ -83,6 +83,9 @@ public class Gathering {
     this.status = status;
     }
 
+    @Column(name = "is_boosted", nullable = false)
+    private boolean boosted = false;
+
 
     @PrePersist
     public void prePersist() {

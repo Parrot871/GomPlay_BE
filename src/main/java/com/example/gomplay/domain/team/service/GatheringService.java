@@ -153,24 +153,39 @@ public class GatheringService {
 
     @Transactional(readOnly = true)
     public Page<GatheringListResponse> getGatheringList(
-            String sportType, String difficulty, int page, int size) {
+        String sportType, String difficulty, String status, int page, int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("scheduledAt").ascending());
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by("scheduledAt").ascending());
 
-        if (sportType != null && difficulty != null) {
-            return gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable)
-                    .map(GatheringListResponse::new);
-        } else if (sportType != null) {
-            return gatheringRepository.findBySportType(sportType, pageable)
-                    .map(GatheringListResponse::new);
-        } else if (difficulty != null) {
-            return gatheringRepository.findByDifficulty(difficulty, pageable)
-                    .map(GatheringListResponse::new);
-        } else {
-            return gatheringRepository.findAll(pageable)
-                    .map(GatheringListResponse::new);
+    Gathering.Status gatheringStatus = status != null ? Gathering.Status.valueOf(status) : null;
+
+    if (sportType != null && difficulty != null && gatheringStatus != null) {
+        return gatheringRepository.findBySportTypeAndDifficultyAndStatus(sportType, difficulty, gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (sportType != null && gatheringStatus != null) {
+        return gatheringRepository.findBySportTypeAndStatus(sportType, gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (difficulty != null && gatheringStatus != null) {
+        return gatheringRepository.findByDifficultyAndStatus(difficulty, gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (gatheringStatus != null) {
+        return gatheringRepository.findByStatus(gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (sportType != null && difficulty != null) {
+        return gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable)
+                .map(GatheringListResponse::new);
+    } else if (sportType != null) {
+        return gatheringRepository.findBySportType(sportType, pageable)
+                .map(GatheringListResponse::new);
+    } else if (difficulty != null) {
+        return gatheringRepository.findByDifficulty(difficulty, pageable)
+                .map(GatheringListResponse::new);
+    } else {
+        return gatheringRepository.findAll(pageable)
+                .map(GatheringListResponse::new);
         }
-    }
+   }
 
     @Transactional
     public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
