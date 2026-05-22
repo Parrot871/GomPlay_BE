@@ -10,6 +10,7 @@ import com.example.gomplay.domain.chat.repository.ChatMessageRepository;
 import com.example.gomplay.domain.chat.repository.ChatRoomRepository;
 import com.example.gomplay.domain.matching.entity.MatchResult;
 import com.example.gomplay.domain.matching.repository.MatchResultRepository;
+import com.example.gomplay.domain.review.repository.ReviewRepository;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import com.example.gomplay.global.websocket.dto.WsMessage;
@@ -34,6 +35,7 @@ public class ChatService {
     private final MatchResultRepository matchResultRepository;
     private final UserProfileRepository userProfileRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ReviewRepository reviewRepository;
 
     // 채팅방 입장 (메시지 내역 + 읽음 처리)
     @Transactional
@@ -53,7 +55,10 @@ public class ChatService {
                 .map(ChatMessageDto::of)
                 .collect(Collectors.toList());
 
-        return ChatRoomDetailResponse.of(room, userId, messages, unreadCount);  // 여기
+        boolean reviewed = reviewRepository.existsByReviewer_IdAndMatchResultId(
+                userId, room.getMatchResult().getId()
+        );
+        return ChatRoomDetailResponse.of(room, userId, messages, unreadCount, reviewed);
     }
 
     // 메시지 전송
@@ -173,7 +178,11 @@ public class ChatService {
                             .orElse(null);
                     long unreadCount = chatMessageRepository
                             .countByRoom_IdAndIsReadFalseAndSender_IdNot(room.getId(), userId);
-                    return ChatRoomResponse.of(room, userId, lastMessage, unreadCount);
+
+                    boolean reviewed = reviewRepository.existsByReviewer_IdAndMatchResultId(
+                            userId, room.getMatchResult().getId()
+                    );
+                    return ChatRoomResponse.of(room, userId, lastMessage, unreadCount, reviewed);
                 })
                 .collect(Collectors.toList());
     }

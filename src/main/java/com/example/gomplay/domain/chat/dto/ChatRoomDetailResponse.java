@@ -23,10 +23,11 @@ public class ChatRoomDetailResponse {
     private String matchStatus;
     private long unreadCount;
     private boolean isCompleteButtonVisible;
+    private boolean reviewed;
     private LocalDateTime createdAt;
     private List<ChatMessageDto> messages;  // 전체 메시지
 
-    public static ChatRoomDetailResponse of(ChatRoom room, Long myId, List<ChatMessageDto> messages, long unreadCount) {
+    public static ChatRoomDetailResponse of(ChatRoom room, Long myId, List<ChatMessageDto> messages, long unreadCount, boolean reviewed) {
         MatchResult matchResult = room.getMatchResult();
 
         boolean iAmA = room.getUserA().getId().equals(myId);
@@ -46,6 +47,7 @@ public class ChatRoomDetailResponse {
                 .matchStatus(matchResult.getStatus().name())
                 .unreadCount(unreadCount)
                 .isCompleteButtonVisible(isCompleteButtonVisible)
+                .reviewed(reviewed)
                 .createdAt(room.getCreatedAt())
                 .messages(messages)
                 .build();
