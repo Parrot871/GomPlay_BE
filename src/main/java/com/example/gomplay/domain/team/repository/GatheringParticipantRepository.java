@@ -12,4 +12,5 @@ public interface GatheringParticipantRepository extends JpaRepository<GatheringP
     List<GatheringParticipant> findByGathering_Id(Long gatheringId);
     List<GatheringParticipant> findByUser_IdAndStatus(Long userId, GatheringParticipant.Status status);
     long countByGathering_IdAndStatus(Long gatheringId, GatheringParticipant.Status status);
+    void deleteAllByGathering_Id(Long gatheringId);
 }

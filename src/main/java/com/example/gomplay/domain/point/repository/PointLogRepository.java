@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface PointLogRepository extends JpaRepository<PointLog, Long> {
     List<PointLog> findByUserProfile_IdOrderByCreatedAtDesc(Long userId);
+    void deleteByGatheringId(Long gatheringId);
 }
