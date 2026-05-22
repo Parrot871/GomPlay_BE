@@ -6,6 +6,8 @@ import com.example.gomplay.domain.user.dto.PasswordUpdateRequest;
 import com.example.gomplay.domain.user.dto.UserProfileResponse;
 import com.example.gomplay.domain.user.dto.UserProfileUpdateRequest;
 import com.example.gomplay.domain.user.dto.UserProfileUpdateResponse;
+import com.example.gomplay.domain.user.dto.PartnerProfileResponse;
+
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,5 +70,13 @@ public class UserProfileService {
     userProfile.updateProfile(imageUrl);
 
     return new ProfileImageResponse(imageUrl);
-}
+    }
+
+    // 상대방 프로필 조회
+    @Transactional(readOnly = true)
+    public PartnerProfileResponse getUserProfile(Long userProfileId) {
+    UserProfile userProfile = userProfileRepository.findById(userProfileId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+    return new PartnerProfileResponse(userProfile);
+    }
 }

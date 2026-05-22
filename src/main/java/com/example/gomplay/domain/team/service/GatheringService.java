@@ -26,6 +26,7 @@ import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
 
 import java.util.stream.Collectors;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.springframework.data.domain.Page;
@@ -65,8 +66,8 @@ public class GatheringService {
 
         Gathering saved = gatheringRepository.save(gathering);
 
-        // 모집글 등록 포인트 지급 +5P
-        pointService.addPoint(host, 5, "gathering", saved.getId());
+        // 모집글 등록 포인트 지급 +2P
+        pointService.addPoint(host, 2, "gathering", saved.getId());
 
         return new GatheringCreateResponse(saved);
     }
@@ -153,24 +154,39 @@ public class GatheringService {
 
     @Transactional(readOnly = true)
     public Page<GatheringListResponse> getGatheringList(
-            String sportType, String difficulty, int page, int size) {
+        String sportType, String difficulty, String status, int page, int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("scheduledAt").ascending());
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by("scheduledAt").ascending());
 
-        if (sportType != null && difficulty != null) {
-            return gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable)
-                    .map(GatheringListResponse::new);
-        } else if (sportType != null) {
-            return gatheringRepository.findBySportType(sportType, pageable)
-                    .map(GatheringListResponse::new);
-        } else if (difficulty != null) {
-            return gatheringRepository.findByDifficulty(difficulty, pageable)
-                    .map(GatheringListResponse::new);
-        } else {
-            return gatheringRepository.findAll(pageable)
-                    .map(GatheringListResponse::new);
+    Gathering.Status gatheringStatus = status != null ? Gathering.Status.valueOf(status) : null;
+
+    if (sportType != null && difficulty != null && gatheringStatus != null) {
+        return gatheringRepository.findBySportTypeAndDifficultyAndStatus(sportType, difficulty, gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (sportType != null && gatheringStatus != null) {
+        return gatheringRepository.findBySportTypeAndStatus(sportType, gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (difficulty != null && gatheringStatus != null) {
+        return gatheringRepository.findByDifficultyAndStatus(difficulty, gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (gatheringStatus != null) {
+        return gatheringRepository.findByStatus(gatheringStatus, pageable)
+                .map(GatheringListResponse::new);
+    } else if (sportType != null && difficulty != null) {
+        return gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable)
+                .map(GatheringListResponse::new);
+    } else if (sportType != null) {
+        return gatheringRepository.findBySportType(sportType, pageable)
+                .map(GatheringListResponse::new);
+    } else if (difficulty != null) {
+        return gatheringRepository.findByDifficulty(difficulty, pageable)
+                .map(GatheringListResponse::new);
+    } else {
+        return gatheringRepository.findAll(pageable)
+                .map(GatheringListResponse::new);
         }
-    }
+   }
 
     @Transactional
     public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
@@ -242,7 +258,12 @@ public class GatheringService {
 
         if (hostCompleted && allParticipantsCompleted) {
                 gathering.updateStatus(Gathering.Status.COMPLETED);
-        }
+
+                // 운동 완료 포인트 지급 +4P
+                pointService.addPoint(user, 4, "exercise_complete", null);
+                }
+        // 개인 완료 시 +4p 지급        
+        pointService.addPoint(user, 4, "exercise_complete", null);
         }
 
 
@@ -270,5 +291,47 @@ public class GatheringService {
                         return new GatheringHistoryResponse(gathering, isReviewed);
                 })
             .   collect(Collectors.toList());
+        }
+
+        @Transactional
+        public void boostGathering(Long userId, Long gatheringId) {
+                UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        Gathering gathering = gatheringRepository.findById(gatheringId)
+            .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+        if (!gathering.getHost().getId().equals(user.getId())) {
+        throw new IllegalArgumentException("모집글 작성자만 부스트할 수 있습니다.");
+        }
+
+        if (user.getPointBalance() < 25) {
+        throw new IllegalArgumentException("포인트가 부족합니다.");
+        }
+
+        // 포인트 차감 -25P
+        pointService.addPoint(user, -25, "boost", gatheringId);
+
+        // 부스트 설정 (24시간)
+        gathering.boost(LocalDateTime.now().plusHours(24));
+        }
+
+        //모집글 신청자 목록 조회(방장만 가능)
+        @Transactional(readOnly = true)
+        public List<GatheringParticipantResponse> getParticipants(Long userId, Long gatheringId) {
+                UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        Gathering gathering = gatheringRepository.findById(gatheringId)
+                .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+        if (!gathering.getHost().getId().equals(host.getId())) {
+        throw new IllegalArgumentException("모집글 작성자만 조회할 수 있습니다.");
+        }
+
+        return gatheringParticipantRepository.findByGathering_Id(gatheringId)
+                .stream()
+                .map(GatheringParticipantResponse::new)
+                .collect(Collectors.toList());
         }
 }

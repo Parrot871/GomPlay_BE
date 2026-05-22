@@ -70,26 +70,27 @@ public class GatheringController {
     public ResponseEntity<Page<GatheringListResponse>> getGatheringList(
         @RequestParam(required = false) String sportType,
         @RequestParam(required = false) String difficulty,
+        @RequestParam(required = false) String status,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
-    return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, page, size));
+    return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, status, page, size));
     }
 
     @PatchMapping("/{gatheringId}/participants/{participantId}/accept")
-public ResponseEntity<GatheringParticipantResponse> acceptParticipant(
+    public ResponseEntity<GatheringParticipantResponse> acceptParticipant(
         @AuthenticationPrincipal Long userId,
         @PathVariable Long gatheringId,
         @PathVariable Long participantId) {
     return ResponseEntity.ok(gatheringService.acceptParticipant(userId, gatheringId, participantId));
-}
+    }
 
     @PatchMapping("/{gatheringId}/participants/{participantId}/reject")
-public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
+    public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
         @AuthenticationPrincipal Long userId,
         @PathVariable Long gatheringId,
         @PathVariable Long participantId) {
     return ResponseEntity.ok(gatheringService.rejectParticipant(userId, gatheringId, participantId));
-}
+    }
 
     @GetMapping("/recommend")
     public ResponseEntity<List<GatheringRecommendResponse>> getRecommendedGatherings(
@@ -110,6 +111,21 @@ public ResponseEntity<GatheringParticipantResponse> rejectParticipant(
     public ResponseEntity<List<GatheringHistoryResponse>> getGatheringHistory(
             @AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(gatheringService.getGatheringHistory(userId));
-}
+    }   
+
+    @PostMapping("/{gatheringId}/boost")
+    public ResponseEntity<Void> boostGathering(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    gatheringService.boostGathering(userId, gatheringId);
+    return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{gatheringId}/participants")
+    public ResponseEntity<List<GatheringParticipantResponse>> getParticipants(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    return ResponseEntity.ok(gatheringService.getParticipants(userId, gatheringId));
+    }
 
 }

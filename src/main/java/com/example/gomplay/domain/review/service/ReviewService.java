@@ -104,8 +104,26 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        // 리뷰 작성 포인트 지급 +5P
-        pointService.addPoint(reviewer, 5, "review", null);
+        // 리뷰 작성 포인트 지급 +2P
+        pointService.addPoint(reviewer, 2, "review", null);
+
+        // 상세 후기 작성 시 +1P (comment가 있으면)
+        if (request.getComment() != null && !request.getComment().isEmpty()) {
+            pointService.addPoint(reviewer, 1, "review_detail", null);
+        }
+
+        // 상호 리뷰 완료 시 +1P (상대방도 리뷰 작성했으면)
+        boolean mutualReview = reviewRepository
+        .existsByReviewer_IdAndReviewee_Id(request.getRevieweeId(), reviewer.getId());
+        if (mutualReview) {
+            pointService.addPoint(reviewer, 1, "mutual_review", null);
+            // 상대방에게도 +1P
+            UserProfile revieweeProfile = userProfileRepository.findById(request.getRevieweeId())
+            .orElse(null);
+        if (revieweeProfile != null) {
+            pointService.addPoint(revieweeProfile, 1, "mutual_review", null);
+        }
+        }
 
         // 신고 처리
         if (request.getReportCategories() != null && !request.getReportCategories().isEmpty()) {

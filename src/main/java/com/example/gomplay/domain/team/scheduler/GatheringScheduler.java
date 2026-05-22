@@ -37,4 +37,17 @@ public class GatheringScheduler {
 
         log.info("자동 완료 처리 완료: {}건", gatherings.size());
     }
+
+    // 매 10분마다 부스트 만료 체크
+    @Scheduled(fixedRate = 600000)
+    @Transactional
+    public void expireBoost() {
+        List<Gathering> boostedGatherings = gatheringRepository
+            .findByBoostedTrueAndBoostExpiredAtBefore(LocalDateTime.now());
+
+    for (Gathering gathering : boostedGatherings) {
+        gathering.boost(null);
+    }
+    log.info("부스트 만료 처리: {}건", boostedGatherings.size());
+    }
 }
