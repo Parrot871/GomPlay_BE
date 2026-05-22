@@ -1,6 +1,8 @@
 package com.example.gomplay.domain.team.dto;
 
 import com.example.gomplay.domain.team.entity.Gathering;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Getter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,6 +23,9 @@ public class GatheringListResponse {
     private String status;
     private String hostProfileImageUrl;
     private BigDecimal hostMannerTemperature;
+    @JsonProperty("isBoosted")
+    private boolean boostedFlag;
+    private LocalDateTime boostExpiredAt;
 
     public GatheringListResponse(Gathering gathering) {
         this.id = gathering.getId();
@@ -37,5 +42,7 @@ public class GatheringListResponse {
         this.status = gathering.getStatus().name();
         this.hostProfileImageUrl = gathering.getHost().getProfileImageUrl();
         this.hostMannerTemperature = gathering.getHost().getMannerTemperature();
+        this.boostedFlag = gathering.isBoosted();
+        this.boostExpiredAt = gathering.getBoostExpiredAt();
     }
 }

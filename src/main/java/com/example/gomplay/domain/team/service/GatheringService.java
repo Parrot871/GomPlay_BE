@@ -26,10 +26,13 @@ import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
 
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.Random;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
 
@@ -154,39 +157,63 @@ public class GatheringService {
 
     @Transactional(readOnly = true)
     public Page<GatheringListResponse> getGatheringList(
-        String sportType, String difficulty, String status, int page, int size) {
+    String sportType, String difficulty, String status, int page, int size) {
 
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by("scheduledAt").ascending());
+    Pageable pageable = PageRequest.of(page, size, Sort.by("scheduledAt").descending());
 
     Gathering.Status gatheringStatus = status != null ? Gathering.Status.valueOf(status) : null;
 
-    if (sportType != null && difficulty != null && gatheringStatus != null) {
-        return gatheringRepository.findBySportTypeAndDifficultyAndStatus(sportType, difficulty, gatheringStatus, pageable)
-                .map(GatheringListResponse::new);
-    } else if (sportType != null && gatheringStatus != null) {
-        return gatheringRepository.findBySportTypeAndStatus(sportType, gatheringStatus, pageable)
-                .map(GatheringListResponse::new);
-    } else if (difficulty != null && gatheringStatus != null) {
-        return gatheringRepository.findByDifficultyAndStatus(difficulty, gatheringStatus, pageable)
-                .map(GatheringListResponse::new);
-    } else if (gatheringStatus != null) {
-        return gatheringRepository.findByStatus(gatheringStatus, pageable)
-                .map(GatheringListResponse::new);
-    } else if (sportType != null && difficulty != null) {
-        return gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable)
-                .map(GatheringListResponse::new);
-    } else if (sportType != null) {
-        return gatheringRepository.findBySportType(sportType, pageable)
-                .map(GatheringListResponse::new);
-    } else if (difficulty != null) {
-        return gatheringRepository.findByDifficulty(difficulty, pageable)
-                .map(GatheringListResponse::new);
-    } else {
-        return gatheringRepository.findAll(pageable)
-                .map(GatheringListResponse::new);
+    Page<Gathering> gatherings;
+
+        if (sportType != null && difficulty != null && gatheringStatus != null) {
+                gatherings = gatheringRepository.findBySportTypeAndDifficultyAndStatus(sportType, difficulty, gatheringStatus, pageable);
+        } else if (sportType != null && gatheringStatus != null) {
+                gatherings = gatheringRepository.findBySportTypeAndStatus(sportType, gatheringStatus, pageable);
+        } else if (difficulty != null && gatheringStatus != null) {
+                gatherings = gatheringRepository.findByDifficultyAndStatus(difficulty, gatheringStatus, pageable);
+        } else if (gatheringStatus != null) {
+                gatherings = gatheringRepository.findByStatus(gatheringStatus, pageable);
+        } else if (sportType != null && difficulty != null) {
+                gatherings = gatheringRepository.findBySportTypeAndDifficulty(sportType, difficulty, pageable);
+        } else if (sportType != null) {
+                gatherings = gatheringRepository.findBySportType(sportType, pageable);
+        } else if (difficulty != null) {
+                gatherings = gatheringRepository.findByDifficulty(difficulty, pageable);
+        } else {
+                gatherings = gatheringRepository.findAll(pageable);
         }
-   }
+
+        List<Gathering> content = new ArrayList<>(gatherings.getContent());
+        LocalDateTime now = LocalDateTime.now();
+
+        long seed = now.getYear() * 100000000L +
+                now.getMonthValue() * 1000000L +
+                now.getDayOfMonth() * 10000L +
+                now.getHour() * 100L +
+                (now.getMinute() / 10) * 10L;
+        Random random = new Random(seed);
+
+        List<Gathering> boosted = content.stream()
+                .filter(g -> g.isBoosted() && g.getBoostExpiredAt() != null && g.getBoostExpiredAt().isAfter(now))
+                .collect(Collectors.toList());
+
+        List<Gathering> normal = content.stream()
+                .filter(g -> !g.isBoosted() || g.getBoostExpiredAt() == null || g.getBoostExpiredAt().isBefore(now))
+                .collect(Collectors.toList());
+
+        List<Gathering> result = new ArrayList<>();
+        if (!boosted.isEmpty()) {
+                Collections.shuffle(boosted, random);
+                result.add(boosted.get(0));
+        }
+        result.addAll(normal);
+
+        return new PageImpl<>(
+                result.stream().map(GatheringListResponse::new).collect(Collectors.toList()),
+                gatherings.getPageable(),
+                gatherings.getTotalElements()
+        );
+        }
 
     @Transactional
     public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
