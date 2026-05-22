@@ -6,6 +6,8 @@ import com.example.gomplay.domain.matching.entity.MatchResult;
 import com.example.gomplay.domain.chat.entity.ChatRoom;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import lombok.Getter;
+import org.springframework.cglib.core.Local;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -21,6 +23,7 @@ public class ActiveMatchResponse {
     private String partnerStudentNumber;
     private String location;
     private String scheduledTime;
+    private LocalDateTime scheduledAt;
     private LocalDateTime scheduledEndAt;
     private String difficulty;
     private String sportType;
@@ -40,12 +43,12 @@ public class ActiveMatchResponse {
         res.type = "GATHERING";
         res.status = toGatheringStatus(gathering);
         res.role = gathering.getHost().getId().equals(me.getId()) ? "HOST" : "GUEST";
-        res.partnerName = partner.getName();
-        res.partnerProfileImageUrl = partner.getProfileImageUrl();
-        res.partnerDepartment = partner.getDepartment();
-        res.partnerStudentNumber = partner.getStudentId();
+        res.partnerName = partner != null ? partner.getName() : null;
+        res.partnerProfileImageUrl = partner != null ? partner.getProfileImageUrl() : null;
+        res.partnerDepartment = partner != null ? partner.getDepartment() : null;
+        res.partnerStudentNumber = partner != null ? partner.getStudentId() : null;
         res.location = gathering.getVenue();
-        res.scheduledTime = formatScheduledTime(gathering.getScheduledAt(), gathering.getScheduledEndAt());
+        res.scheduledAt= gathering.getScheduledAt();
         res.scheduledEndAt = gathering.getScheduledEndAt();
         res.difficulty = gathering.getDifficulty();
         res.sportType = gathering.getSportType();

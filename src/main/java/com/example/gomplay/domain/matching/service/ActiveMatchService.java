@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,15 +49,15 @@ public class ActiveMatchService {
                             .findFirst()
                             .orElse(null);
 
-                    if (partnerParticipant == null) return;
+                    // ACCEPTED 없어도 방장이면 표시
+                    UserProfile partner = partnerParticipant != null ? partnerParticipant.getUser() : null;
 
                     long pendingCount = gatheringParticipantRepository
                             .countByGathering_IdAndStatus(gathering.getId(), GatheringParticipant.Status.PENDING);
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                    result.add(ActiveMatchResponse.ofGathering(
-                            gathering, me, partnerParticipant.getUser(), pendingCount, reviewed));
+                    result.add(ActiveMatchResponse.ofGathering(gathering, me, partner, pendingCount, reviewed));
                 });
 
         // GATHERING - 내가 ACCEPTED 참여자인 OPEN 모집글
@@ -72,8 +71,7 @@ public class ActiveMatchService {
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                    result.add(ActiveMatchResponse.ofGathering(
-                            gathering, me, gathering.getHost(), pendingCount, reviewed));
+                    result.add(ActiveMatchResponse.ofGathering(gathering, me, gathering.getHost(), pendingCount, reviewed));
                 });
 
         // PARTNER 매칭 - IN_PROGRESS
