@@ -2,6 +2,8 @@ package com.example.gomplay.domain.team.dto;
 
 import com.example.gomplay.domain.team.entity.GatheringParticipant;
 import lombok.Getter;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -13,6 +15,7 @@ public class GatheringParticipantResponse {
     private String userProfileImageUrl;
     private String status;
     private LocalDateTime updatedAt;
+    private BigDecimal mannerTemperature;
 
     public GatheringParticipantResponse(GatheringParticipant participant) {
         this.id = participant.getId();
@@ -22,5 +25,6 @@ public class GatheringParticipantResponse {
         this.userProfileImageUrl = participant.getUser().getProfileImageUrl();
         this.status = participant.getStatus().name();
         this.updatedAt = participant.getUpdatedAt();
+        this.mannerTemperature = participant.getUser().getMannerTemperature();
     }
 }
