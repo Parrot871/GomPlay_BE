@@ -37,20 +37,19 @@ public class ActiveMatchService {
 
         List<ActiveMatchResponse> result = new ArrayList<>();
 
-        // GATHERING - 내가 방장인 OPEN 모집글
+        // GATHERING - 내가 HOST인 OPEN 모집글
         gatheringRepository.findByHost_Id(me.getId())
                 .stream()
                 .filter(g -> g.getStatus() == Gathering.Status.OPEN)
                 .forEach(gathering -> {
-                    GatheringParticipant partnerParticipant = gatheringParticipantRepository
+                    GatheringParticipant acceptedParticipant = gatheringParticipantRepository
                             .findByGathering_Id(gathering.getId())
                             .stream()
                             .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
                             .findFirst()
                             .orElse(null);
 
-                    // ACCEPTED 없어도 방장이면 표시
-                    UserProfile partner = partnerParticipant != null ? partnerParticipant.getUser() : null;
+                    UserProfile partner = acceptedParticipant != null ? acceptedParticipant.getUser() : null;
 
                     long pendingCount = gatheringParticipantRepository
                             .countByGathering_IdAndStatus(gathering.getId(), GatheringParticipant.Status.PENDING);
@@ -72,6 +71,19 @@ public class ActiveMatchService {
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
                     result.add(ActiveMatchResponse.ofGathering(gathering, me, gathering.getHost(), pendingCount, reviewed));
+                });
+
+        // GATHERING - 내가 PENDING 신청자인 OPEN 모집글
+        gatheringParticipantRepository.findByUser_IdAndStatus(me.getId(), GatheringParticipant.Status.PENDING)
+                .stream()
+                .filter(p -> p.getGathering().getStatus() == Gathering.Status.OPEN)
+                .forEach(participant -> {
+                    Gathering gathering = participant.getGathering();
+                    boolean reviewed = reviewRepository
+                            .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+
+                    result.add(ActiveMatchResponse.ofGatheringPending(
+                            gathering, me, gathering.getHost(), reviewed));
                 });
 
         // PARTNER 매칭 - IN_PROGRESS
