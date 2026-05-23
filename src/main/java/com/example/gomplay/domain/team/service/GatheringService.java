@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.gomplay.domain.team.dto.GatheringDetailResponse;
 import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
+import com.example.gomplay.domain.point.repository.PointLogRepository;
 
 import java.util.stream.Collectors;
 import java.util.List;
@@ -46,6 +47,7 @@ public class GatheringService {
     private final GatheringParticipantRepository gatheringParticipantRepository;
     private final PointService pointService;
     private final ReviewRepository reviewRepository;
+    private final PointLogRepository pointLogRepository;
 
     @Transactional
     public GatheringCreateResponse createGathering(Long userId, GatheringCreateRequest request) {
@@ -111,14 +113,17 @@ public class GatheringService {
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
         Gathering gathering = gatheringRepository.findById(gatheringId)
-                .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
 
-        if (!gathering.getHost().getId().equals(host.getId())) {
-            throw new IllegalArgumentException("모집글 작성자만 삭제할 수 있습니다.");
-        }
+    if (!gathering.getHost().getId().equals(host.getId())) {
+        throw new IllegalArgumentException("모집글 작성자만 삭제할 수 있습니다.");
+    }
+
+        gatheringParticipantRepository.deleteAllByGathering_Id(gatheringId);
+        pointLogRepository.deleteByGatheringId(gatheringId);
 
         gatheringRepository.delete(gathering);
-    }
+        }
 
     @Transactional(readOnly = true)
     public GatheringDetailResponse getGathering(Long gatheringId) {

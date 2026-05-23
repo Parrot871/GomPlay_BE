@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
+
 
 @Configuration
 @EnableWebSecurity
@@ -32,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/gathering/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/api/gathering/**").permitAll()
                         .requestMatchers("/api/places/**").permitAll()
                         .requestMatchers("/api/attendance/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()

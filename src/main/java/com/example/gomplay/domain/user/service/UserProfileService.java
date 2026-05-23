@@ -19,6 +19,12 @@ import com.example.gomplay.global.s3.S3Service;
 import com.example.gomplay.domain.user.dto.ProfileImageResponse;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import com.example.gomplay.domain.survey.entity.UserSurvey;
+import com.example.gomplay.domain.survey.entity.UserSurveyExercise;
+import com.example.gomplay.domain.survey.repository.UserSurveyRepository;
+import com.example.gomplay.domain.survey.repository.UserSurveyExerciseRepository;
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +34,8 @@ public class UserProfileService {
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final S3Service s3Service;
+    private final UserSurveyRepository userSurveyRepository;
+    private final UserSurveyExerciseRepository userSurveyExerciseRepository;
 
     // 프로필 조회
     @Transactional(readOnly = true)
@@ -72,11 +80,15 @@ public class UserProfileService {
     return new ProfileImageResponse(imageUrl);
     }
 
-    // 상대방 프로필 조회
+    //상대방 프로필 조회
     @Transactional(readOnly = true)
     public PartnerProfileResponse getUserProfile(Long userProfileId) {
     UserProfile userProfile = userProfileRepository.findById(userProfileId)
             .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
-    return new PartnerProfileResponse(userProfile);
+
+    UserSurvey survey = userSurveyRepository.findByUserProfile_Id(userProfileId).orElse(null);
+    List<UserSurveyExercise> exercises = userSurveyExerciseRepository.findByUserProfile_Id(userProfileId);
+
+    return new PartnerProfileResponse(userProfile, survey, exercises);
     }
 }
