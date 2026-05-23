@@ -3,6 +3,7 @@ package com.example.gomplay.domain.matching.service;
 import com.example.gomplay.domain.chat.entity.ChatRoom;
 import com.example.gomplay.domain.chat.repository.ChatRoomRepository;
 import com.example.gomplay.domain.matching.dto.ActiveMatchResponse;
+import com.example.gomplay.domain.matching.dto.MatchHistoryResponse;
 import com.example.gomplay.domain.matching.entity.MatchResult;
 import com.example.gomplay.domain.matching.repository.MatchResultRepository;
 import com.example.gomplay.domain.review.repository.ReviewRepository;
@@ -105,4 +106,81 @@ public class ActiveMatchService {
 
         return result;
     }
+
+
+    @Transactional(readOnly = true)
+    public List<MatchHistoryResponse> getMatchHistory(Long userId) {
+        UserProfile me = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        List<MatchHistoryResponse> result = new ArrayList<>();
+
+        // 1. 퀵매칭 완료 내역
+        matchResultRepository.findActiveByUserId(me.getId(), MatchResult.MatchResultStatus.COMPLETED)
+                .forEach(matchResult -> {
+                        UserProfile partner = matchResult.getUserA().getId().equals(me.getId())
+                                ? matchResult.getUserB() : matchResult.getUserA();
+
+                        boolean reviewed = reviewRepository
+                                .existsByReviewer_IdAndMatchResultId(me.getId(), matchResult.getId());
+
+                        result.add(MatchHistoryResponse.builder()
+                                .id(matchResult.getId())
+                                .type("PARTNER")
+                                .status("COMPLETED")
+                                .partnerName(partner.getName())
+                                .partnerProfileImageUrl(partner.getProfileImageUrl())
+                                .partnerDepartment(partner.getDepartment())
+                                .partnerStudentNumber(partner.getStudentId())
+                                .matchedAt(matchResult.getCreatedAt())
+                                .reviewed(reviewed)
+                                .build());
+                });
+
+        // 2. 일반 모집 완료 내역 (방장)
+        gatheringRepository.findByHost_IdAndStatus(me.getId(), Gathering.Status.COMPLETED)
+                .forEach(gathering -> {
+                        boolean reviewed = reviewRepository
+                                .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+
+                        result.add(MatchHistoryResponse.builder()
+                                .id(gathering.getId())
+                                .type("GATHERING")
+                                .status("COMPLETED")
+                                .role("HOST")
+                                .location(gathering.getVenue())
+                                .sportType(gathering.getSportType())
+                                .scheduledAt(gathering.getScheduledAt())
+                                .reviewed(reviewed)
+                                .build());
+                });
+
+        // 3. 일반 모집 완료 내역 (참여자)
+        gatheringParticipantRepository.findByUser_IdAndStatus(me.getId(), GatheringParticipant.Status.ACCEPTED)
+                .stream()
+                .filter(p -> p.getGathering().getStatus() == Gathering.Status.COMPLETED)
+                .forEach(participant -> {
+                        Gathering gathering = participant.getGathering();
+                        UserProfile host = gathering.getHost();
+                        boolean reviewed = reviewRepository
+                                .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+
+                        result.add(MatchHistoryResponse.builder()
+                                .id(gathering.getId())
+                                .type("GATHERING")
+                                .status("COMPLETED")
+                                .role("GUEST")
+                                .partnerName(host.getName())
+                                .partnerProfileImageUrl(host.getProfileImageUrl())
+                                .partnerDepartment(host.getDepartment())
+                                .partnerStudentNumber(host.getStudentId())
+                                .location(gathering.getVenue())
+                                .sportType(gathering.getSportType())
+                                .scheduledAt(gathering.getScheduledAt())
+                                .reviewed(reviewed)
+                                .build());
+                });
+
+        return result;
+        }
 }
