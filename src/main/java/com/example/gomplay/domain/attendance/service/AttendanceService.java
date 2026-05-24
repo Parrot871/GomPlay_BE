@@ -9,6 +9,8 @@ import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.gomplay.domain.point.service.PointService;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,8 +22,9 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final UserProfileRepository userProfileRepository;
+    private final PointService pointService;
 
-    private static final int ATTENDANCE_POINT = 10;
+    private static final int ATTENDANCE_POINT = 1;
 
     @Transactional
     public AttendanceResponse checkAttendance(Long userId) {
@@ -42,7 +45,7 @@ public class AttendanceService {
         attendanceRepository.save(attendance);
 
         // 포인트 적립
-        user.addPoint(ATTENDANCE_POINT);
+        pointService.addPoint(user, ATTENDANCE_POINT, "attendance", null);
 
         int totalAttendance = attendanceRepository.countByUserProfile_Id(user.getId());
 
