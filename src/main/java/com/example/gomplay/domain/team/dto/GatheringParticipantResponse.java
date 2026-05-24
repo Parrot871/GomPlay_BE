@@ -16,6 +16,8 @@ public class GatheringParticipantResponse {
     private String status;
     private LocalDateTime updatedAt;
     private BigDecimal mannerTemperature;
+    private String department;
+    private String studentId;
 
     public GatheringParticipantResponse(GatheringParticipant participant) {
         this.id = participant.getId();
@@ -26,5 +28,7 @@ public class GatheringParticipantResponse {
         this.status = participant.getStatus().name();
         this.updatedAt = participant.getUpdatedAt();
         this.mannerTemperature = participant.getUser().getMannerTemperature();
+        this.department = participant.getUser().getDepartment();
+        this.studentId = participant.getUser().getStudentId();
     }
 }

@@ -7,6 +7,7 @@ import com.example.gomplay.domain.user.entity.UserProfile;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 @Getter
@@ -21,15 +22,24 @@ public class ActiveMatchResponse {
     private String partnerStudentNumber;
     private String location;
     private String scheduledTime;
-    private LocalDateTime scheduledAt;
-    private LocalDateTime scheduledEndAt;
+    private String scheduledAt;
+    private String scheduledEndAt;
     private String difficulty;
     private String sportType;
     private Long chatRoomId;
-    private LocalDateTime matchedAt;
+    private String matchedAt;
     private long pendingCount;
     private boolean reviewed;
     private boolean canComplete;
+
+    private static final DateTimeFormatter FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+            .withZone(ZoneId.of("Asia/Seoul"));
+
+    private static String toZonedString(LocalDateTime dt) {
+        if (dt == null) return null;
+        return dt.atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER);
+    }
 
     // GATHERING용 (HOST / ACCEPTED GUEST 공통)
     public static ActiveMatchResponse ofGathering(
@@ -44,7 +54,6 @@ public class ActiveMatchResponse {
         res.status = toGatheringStatus(gathering);
         res.role = isHost ? "HOST" : "GUEST";
 
-        // HOST는 partner(ACCEPTED 참여자) 정보, GUEST는 항상 host 정보
         UserProfile displayPartner = isHost ? partner : gathering.getHost();
         res.partnerName = displayPartner != null ? displayPartner.getName() : null;
         res.partnerProfileImageUrl = displayPartner != null ? displayPartner.getProfileImageUrl() : null;
@@ -52,8 +61,8 @@ public class ActiveMatchResponse {
         res.partnerStudentNumber = displayPartner != null ? displayPartner.getStudentId() : null;
 
         res.location = gathering.getVenue();
-        res.scheduledAt = gathering.getScheduledAt();
-        res.scheduledEndAt = gathering.getScheduledEndAt();
+        res.scheduledAt = toZonedString(gathering.getScheduledAt());
+        res.scheduledEndAt = toZonedString(gathering.getScheduledEndAt());
         res.scheduledTime = formatScheduledTime(gathering.getScheduledAt(), gathering.getScheduledEndAt());
         res.difficulty = gathering.getDifficulty();
         res.sportType = gathering.getSportType();
@@ -81,8 +90,8 @@ public class ActiveMatchResponse {
         res.partnerDepartment = host.getDepartment();
         res.partnerStudentNumber = host.getStudentId();
         res.location = gathering.getVenue();
-        res.scheduledAt = gathering.getScheduledAt();
-        res.scheduledEndAt = gathering.getScheduledEndAt();
+        res.scheduledAt = toZonedString(gathering.getScheduledAt());
+        res.scheduledEndAt = toZonedString(gathering.getScheduledEndAt());
         res.scheduledTime = formatScheduledTime(gathering.getScheduledAt(), gathering.getScheduledEndAt());
         res.difficulty = gathering.getDifficulty();
         res.sportType = gathering.getSportType();
@@ -115,7 +124,7 @@ public class ActiveMatchResponse {
         res.difficulty = null;
         res.sportType = null;
         res.chatRoomId = chatRoom != null ? chatRoom.getId() : null;
-        res.matchedAt = matchResult.getCreatedAt();
+        res.matchedAt = toZonedString(matchResult.getCreatedAt());
         res.pendingCount = 0;
         res.reviewed = reviewed;
         res.canComplete = matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS
