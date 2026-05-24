@@ -20,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 @Service
 @RequiredArgsConstructor
 public class ActiveMatchService {
@@ -111,31 +114,32 @@ public class ActiveMatchService {
     @Transactional(readOnly = true)
     public List<MatchHistoryResponse> getMatchHistory(Long userId) {
         UserProfile me = userProfileRepository.findByAuthUser_Id(userId)
-                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        List<MatchHistoryResponse> result = new ArrayList<>();
+    List<MatchHistoryResponse> result = new ArrayList<>();
 
-        // 1. 퀵매칭 완료 내역
-        matchResultRepository.findActiveByUserId(me.getId(), MatchResult.MatchResultStatus.COMPLETED)
-                .forEach(matchResult -> {
-                        UserProfile partner = matchResult.getUserA().getId().equals(me.getId())
-                                ? matchResult.getUserB() : matchResult.getUserA();
+    // 1. 퀵매칭 완료 내역
+    matchResultRepository.findActiveByUserId(me.getId(), MatchResult.MatchResultStatus.COMPLETED)
+            .forEach(matchResult -> {
+                    UserProfile partner = matchResult.getUserA().getId().equals(me.getId())
+                            ? matchResult.getUserB() : matchResult.getUserA();
 
-                        boolean reviewed = reviewRepository
-                                .existsByReviewer_IdAndMatchResultId(me.getId(), matchResult.getId());
+                    boolean reviewed = reviewRepository
+                            .existsByReviewer_IdAndMatchResultId(me.getId(), matchResult.getId());
 
-                        result.add(MatchHistoryResponse.builder()
-                                .id(matchResult.getId())
-                                .type("PARTNER")
-                                .status("COMPLETED")
-                                .partnerName(partner.getName())
-                                .partnerProfileImageUrl(partner.getProfileImageUrl())
-                                .partnerDepartment(partner.getDepartment())
-                                .partnerStudentNumber(partner.getStudentId())
-                                .matchedAt(matchResult.getCreatedAt())
-                                .reviewed(reviewed)
-                                .build());
-                });
+                    result.add(MatchHistoryResponse.builder()
+                            .id(matchResult.getId())
+                            .type("PARTNER")
+                            .status("COMPLETED")
+                            .partnerName(partner.getName())
+                            .partnerProfileImageUrl(partner.getProfileImageUrl())
+                            .partnerDepartment(partner.getDepartment())
+                            .partnerStudentNumber(partner.getStudentId())
+                            .matchedAt(matchResult.getCreatedAt() != null ?
+                                matchResult.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
+                            .reviewed(reviewed)
+                            .build());
+            });
 
         // 2. 일반 모집 완료 내역 (방장)
         gatheringRepository.findByHost_IdAndStatus(me.getId(), Gathering.Status.COMPLETED)
@@ -150,7 +154,8 @@ public class ActiveMatchService {
                                 .role("HOST")
                                 .location(gathering.getVenue())
                                 .sportType(gathering.getSportType())
-                                .scheduledAt(gathering.getScheduledAt())
+                                .scheduledAt(gathering.getScheduledAt() != null ?
+                                    gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
                                 .reviewed(reviewed)
                                 .build());
                 });
@@ -176,11 +181,16 @@ public class ActiveMatchService {
                                 .partnerStudentNumber(host.getStudentId())
                                 .location(gathering.getVenue())
                                 .sportType(gathering.getSportType())
-                                .scheduledAt(gathering.getScheduledAt())
+                                .scheduledAt(gathering.getScheduledAt() != null ?
+                                    gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
                                 .reviewed(reviewed)
                                 .build());
                 });
 
         return result;
         }
+
+        private static final DateTimeFormatter FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+        .withZone(ZoneId.of("Asia/Seoul"));
 }

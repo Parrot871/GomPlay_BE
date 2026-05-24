@@ -2,7 +2,6 @@ package com.example.gomplay.domain.matching.dto;
 
 import lombok.Builder;
 import lombok.Getter;
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -17,7 +16,7 @@ public class MatchHistoryResponse {
     private String partnerStudentNumber;
     private String location;
     private String sportType;
-    private LocalDateTime scheduledAt;
-    private LocalDateTime matchedAt;
+    private String scheduledAt;
+    private String matchedAt;
     private boolean reviewed;
 }
