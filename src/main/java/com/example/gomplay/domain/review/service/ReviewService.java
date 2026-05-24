@@ -9,6 +9,8 @@ import com.example.gomplay.domain.report.repository.ReportRepository;
 import com.example.gomplay.domain.point.service.PointService;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
+import com.example.gomplay.domain.notification.entity.Notification;
+import com.example.gomplay.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,7 @@ public class ReviewService {
     private final UserProfileRepository userProfileRepository;
     private final ReportRepository reportRepository;
     private final PointService pointService;
+    private final NotificationService notificationService;
 
     // 평가 제출
     @Transactional
@@ -103,6 +106,15 @@ public class ReviewService {
                 .build();
 
         reviewRepository.save(review);
+
+        // 리뷰 받은 사람에게 알림
+        notificationService.createNotification(
+            reviewee,
+            Notification.NotificationType.review,
+            "새로운 평가",
+            reviewer.getName() + "님이 평가를 남겼어요!",
+            review.getId()
+        );
 
         // 리뷰 작성 포인트 지급 +2P
         pointService.addPoint(reviewer, 2, "review", null);

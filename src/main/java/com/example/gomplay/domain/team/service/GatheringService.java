@@ -24,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.gomplay.domain.team.dto.GatheringDetailResponse;
 import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
 import com.example.gomplay.domain.point.repository.PointLogRepository;
+import com.example.gomplay.domain.notification.entity.Notification;
+import com.example.gomplay.domain.notification.service.NotificationService;
+
 
 import java.util.stream.Collectors;
 import java.util.List;
@@ -48,6 +51,7 @@ public class GatheringService {
     private final PointService pointService;
     private final ReviewRepository reviewRepository;
     private final PointLogRepository pointLogRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public GatheringCreateResponse createGathering(Long userId, GatheringCreateRequest request) {
@@ -139,8 +143,8 @@ public class GatheringService {
         return new GatheringDetailResponse(gathering);
     }
 
-    @Transactional
-    public GatheringJoinResponse joinGathering(Long userId, Long gatheringId) {
+   @Transactional
+   public GatheringJoinResponse joinGathering(Long userId, Long gatheringId) {
         UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
@@ -148,15 +152,15 @@ public class GatheringService {
                 .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
 
         if (gathering.getStatus() != Gathering.Status.OPEN) {
-            throw new IllegalArgumentException("모집이 마감된 글입니다.");
+                throw new IllegalArgumentException("모집이 마감된 글입니다.");
         }
 
         if (gathering.getHost().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("본인이 작성한 모집글에는 신청할 수 없습니다.");
+                throw new IllegalArgumentException("본인이 작성한 모집글에는 신청할 수 없습니다.");
         }
 
         if (gatheringParticipantRepository.existsByGathering_IdAndUser_Id(gatheringId, user.getId())) {
-            throw new IllegalArgumentException("이미 신청한 모집글입니다.");
+                throw new IllegalArgumentException("이미 신청한 모집글입니다.");
         }
 
         GatheringParticipant participant = GatheringParticipant.builder()
@@ -164,8 +168,19 @@ public class GatheringService {
                 .user(user)
                 .build();
 
-        return new GatheringJoinResponse(gatheringParticipantRepository.save(participant));
-    }
+        GatheringParticipant saved = gatheringParticipantRepository.save(participant);
+
+        // 호스트에게 알림
+        notificationService.createNotification(
+                gathering.getHost(),
+                Notification.NotificationType.gathering_request,
+                "새로운 참여 신청",
+                user.getName() + "님이 '" + gathering.getTitle() + "' 모집글에 참여 신청했어요!",
+                gathering.getId()
+        );
+
+        return new GatheringJoinResponse(saved);
+  }
 
     @Transactional(readOnly = true)
     public Page<GatheringListResponse> getGatheringList(
@@ -265,6 +280,15 @@ public class GatheringService {
                 gathering.updateStatus(Gathering.Status.CLOSED);
         }
 
+        // 신청자에게 알림
+        notificationService.createNotification(
+        participant.getUser(),
+        Notification.NotificationType.gathering,
+        "참여 신청 수락",
+        "'" + gathering.getTitle() + "' 모집글 참여가 수락되었어요!",
+        gathering.getId()
+        );
+
         return new GatheringParticipantResponse(participant);
         }
 
@@ -285,6 +309,15 @@ public class GatheringService {
                 .orElseThrow(() -> new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
 
         participant.updateStatus(GatheringParticipant.Status.REJECTED);
+
+        // 신청자에게 알림
+        notificationService.createNotification(
+        participant.getUser(),
+        Notification.NotificationType.gathering,
+        "참여 신청 거절",
+        "'" + gathering.getTitle() + "' 모집글 참여가 거절되었어요.",
+        gathering.getId()
+        );
 
         return new GatheringParticipantResponse(participant);
     }

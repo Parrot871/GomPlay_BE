@@ -72,4 +72,33 @@ public class NotificationService {
 
         unreadNotifications.forEach(Notification::markAsRead);
     }
+
+    // 알림 생성
+    @Transactional
+    public void createNotification(UserProfile user, Notification.NotificationType type, String title, String body, Long refId) {
+        Notification notification = Notification.builder()
+                .userProfile(user)
+                .type(type)
+                .title(title)
+                .body(body)
+                .refId(refId)
+                .isRead(false)
+                .build();
+        notificationRepository.save(notification);
+   }
+
+   // 개별 읽음 처리
+   @Transactional
+   public void markAsRead(Long userId, Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
+
+        if (!notification.getUserProfile().getId().equals(userId)) {
+                throw new IllegalArgumentException("권한이 없습니다.");
+        }
+
+        notification.markAsRead();
+    }
+
+
 }

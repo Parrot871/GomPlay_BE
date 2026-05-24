@@ -22,6 +22,9 @@ import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import com.example.gomplay.global.websocket.WebSocketSessionRegistry;
 import com.example.gomplay.global.websocket.dto.WsMessage;
+import com.example.gomplay.domain.notification.entity.Notification;
+import com.example.gomplay.domain.notification.service.NotificationService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -47,6 +50,7 @@ public class QuickMatchService {
     private final MatchResultRepository matchResultRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final PointService pointService;
+    private final NotificationService notificationService;
 
     @Transactional
     public MatchingToggleResponse updateMatchingStatus(Long userId, Boolean isMatching) {
@@ -152,6 +156,14 @@ public class QuickMatchService {
                 WsMessage.builder().type("MATCH_REQUEST").data(response).build()
         );
 
+        notificationService.createNotification(
+        opponent,
+        Notification.NotificationType.match_request,
+        "퀵매칭 신청",
+        requester.getName() + "님이 매칭을 신청했어요!",
+        matchRequest.getId()
+        );
+
         return response;
     }
 
@@ -242,6 +254,14 @@ public class QuickMatchService {
                 "/queue/match",
                 WsMessage.builder().type("MATCH_ACCEPTED").data(wsData).build()
         );
+
+        notificationService.createNotification(
+        requester,
+        Notification.NotificationType.match_accepted,
+        "퀵매칭 수락",
+        opponent.getName() + "님이 매칭을 수락했어요!",
+        matchRequest.getId()
+        );
         return new AcceptMatchResponse(chatRoom.getId());
     }
 
@@ -271,6 +291,14 @@ public class QuickMatchService {
                 matchRequest.getRequester().getId().toString(),
                 "/queue/match",
                 WsMessage.builder().type("MATCH_REJECTED").data(matchRequestId).build()
+        );
+        
+        notificationService.createNotification(
+        matchRequest.getRequester(),
+        Notification.NotificationType.match_rejected,
+        "퀵매칭 거절",
+        opponent.getName() + "님이 매칭을 거절했어요.",
+        matchRequest.getId()
         );
     }
 

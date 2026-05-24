@@ -31,4 +31,12 @@ public class NotificationController {
         notificationService.markAllAsRead(userId);
         return ResponseEntity.ok().build();
     }
+    // 개별 읽음 처리
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<Void> markAsRead(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id) {
+        notificationService.markAsRead(userId, id);
+        return ResponseEntity.ok().build();
+    }
 }
