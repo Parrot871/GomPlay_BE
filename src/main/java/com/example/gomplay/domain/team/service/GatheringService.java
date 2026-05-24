@@ -234,8 +234,10 @@ public class GatheringService {
         );
         }
 
-    @Transactional
-    public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
+
+        
+        @Transactional
+        public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
         UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
@@ -243,7 +245,7 @@ public class GatheringService {
                 .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
 
         if (!gathering.getHost().getId().equals(host.getId())) {
-            throw new IllegalArgumentException("모집글 작성자만 수락할 수 있습니다.");
+                throw new IllegalArgumentException("모집글 작성자만 수락할 수 있습니다.");
         }
 
         GatheringParticipant participant = gatheringParticipantRepository
@@ -252,8 +254,16 @@ public class GatheringService {
 
         participant.updateStatus(GatheringParticipant.Status.ACCEPTED);
 
+        // 인원 충족 시 CLOSED 처리
+        long acceptedCount = gatheringParticipantRepository
+                .countByGathering_IdAndStatus(gatheringId, GatheringParticipant.Status.ACCEPTED);
+
+        if (acceptedCount >= gathering.getMaxParticipants() - 1) {
+                gathering.updateStatus(Gathering.Status.CLOSED);
+        }
+
         return new GatheringParticipantResponse(participant);
-    }
+        }
 
     @Transactional
     public GatheringParticipantResponse rejectParticipant(Long userId, Long gatheringId, Long participantId) {
