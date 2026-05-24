@@ -28,7 +28,6 @@ public interface GatheringRepository extends JpaRepository<Gathering, Long> {
     Page<Gathering> findBySportTypeAndDifficultyAndStatus(String sportType, String difficulty, Gathering.Status status, Pageable pageable);
     List<Gathering> findByBoostedTrueAndBoostExpiredAtBefore(LocalDateTime dateTime);
     List<Gathering> findByHost_Id(Long hostId);
-
-
+    List<Gathering> findByStatusAndScheduledAtBefore(Gathering.Status status, LocalDateTime dateTime);
 }
 
