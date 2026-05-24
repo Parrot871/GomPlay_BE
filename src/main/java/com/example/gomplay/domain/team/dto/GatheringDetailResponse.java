@@ -25,6 +25,8 @@ public class GatheringDetailResponse {
     private LocalDateTime createdAt;
     private String hostName;
     private String hostProfileImageUrl;
+    private String openChatUrl;
+
 
     public GatheringDetailResponse(Gathering gathering) {
         this.id = gathering.getId();
@@ -45,5 +47,6 @@ public class GatheringDetailResponse {
         this.createdAt = gathering.getCreatedAt();
         this.hostName = gathering.getHost().getName();
         this.hostProfileImageUrl = gathering.getHost().getProfileImageUrl();
+        this.openChatUrl = gathering.getOpenChatUrl();
     }
 }

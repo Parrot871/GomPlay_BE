@@ -19,4 +19,5 @@ public class GatheringCreateRequest {
     private String description;
     private LocalDateTime scheduledEndAt;
     private String tags;
+    private String openChatUrl;
 }

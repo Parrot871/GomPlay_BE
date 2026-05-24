@@ -54,6 +54,11 @@ public class GatheringService {
         UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
+        if (request.getOpenChatUrl() == null || !request.getOpenChatUrl().startsWith("https://open.kakao.com/o/")) {
+                throw new IllegalArgumentException("카카오 오픈채팅 링크를 입력해주세요. (https://open.kakao.com/o/로 시작해야 합니다.)");
+        }
+
+
         Gathering gathering = Gathering.builder()
                 .host(host)
                 .title(request.getTitle())
@@ -67,6 +72,7 @@ public class GatheringService {
                 .maxParticipants(request.getMaxParticipants())
                 .description(request.getDescription())
                 .tags(request.getTags())
+                .openChatUrl(request.getOpenChatUrl())
                 .build();
 
         Gathering saved = gatheringRepository.save(gathering);
@@ -101,7 +107,8 @@ public class GatheringService {
                 request.getMaxParticipants(),
                 request.getDescription(),
                 request.getTags(),
-                request.getStatus()
+                request.getStatus(),
+                request.getOpenChatUrl()
         );
 
         return new GatheringUpdateResponse(gathering);
