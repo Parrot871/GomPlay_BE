@@ -235,7 +235,7 @@ public class GatheringService {
         }
 
 
-        
+
         @Transactional
         public GatheringParticipantResponse acceptParticipant(Long userId, Long gatheringId, Long participantId) {
         UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
@@ -253,6 +253,9 @@ public class GatheringService {
                 .orElseThrow(() -> new IllegalArgumentException("신청 정보를 찾을 수 없습니다."));
 
         participant.updateStatus(GatheringParticipant.Status.ACCEPTED);
+
+        //현재 참여자 수 증가
+        gathering.incrementCurrentParticipants();
 
         // 인원 충족 시 CLOSED 처리
         long acceptedCount = gatheringParticipantRepository

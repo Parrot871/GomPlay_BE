@@ -79,6 +79,10 @@ public class Gathering {
         this.hostCompleted = true;
     }
 
+    public void incrementCurrentParticipants() {
+    this.currentParticipants += 1;
+    }
+
     public void updateStatus(Status status) {
     this.status = status;
     }
