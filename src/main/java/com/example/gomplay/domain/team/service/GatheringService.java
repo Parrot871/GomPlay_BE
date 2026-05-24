@@ -169,7 +169,7 @@ public class GatheringService {
 
     @Transactional(readOnly = true)
     public Page<GatheringListResponse> getGatheringList(
-    String sportType, String difficulty, String status, int page, int size) {
+    String sportType, String difficulty, String status, boolean hideExpired, int page, int size) {
 
     Pageable pageable = PageRequest.of(page, size, Sort.by("scheduledAt").descending());
 
@@ -217,6 +217,13 @@ public class GatheringService {
         if (!boosted.isEmpty()) {
                 Collections.shuffle(boosted, random);
                 result.add(boosted.get(0));
+        }
+
+        // 만료된 모집글 필터링
+        if (hideExpired) {
+        normal = normal.stream()
+                .filter(g -> g.getScheduledAt() == null || g.getScheduledAt().isAfter(now))
+                .collect(Collectors.toList());
         }
         result.addAll(normal);
 

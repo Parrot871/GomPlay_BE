@@ -71,9 +71,10 @@ public class GatheringController {
         @RequestParam(required = false) String sportType,
         @RequestParam(required = false) String difficulty,
         @RequestParam(required = false) String status,
+        @RequestParam(required = false, defaultValue = "false") boolean hideExpired,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size) {
-    return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, status, page, size));
+    return ResponseEntity.ok(gatheringService.getGatheringList(sportType, difficulty, status, hideExpired, page, size));
     }
 
     @PatchMapping("/{gatheringId}/participants/{participantId}/accept")
