@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,10 +61,11 @@ public class ActiveMatchService {
                     result.add(ActiveMatchResponse.ofGathering(gathering, me, partner, pendingCount, reviewed));
                 });
 
-        // GATHERING - 내가 ACCEPTED 참여자인 OPEN 모집글
+        // GATHERING - 내가 ACCEPTED 참여자인 OPEN 모집글 (본인이 HOST인 경우 제외)
         gatheringParticipantRepository.findByUser_IdAndStatus(me.getId(), GatheringParticipant.Status.ACCEPTED)
                 .stream()
                 .filter(p -> p.getGathering().getStatus() == Gathering.Status.OPEN)
+                .filter(p -> !p.getGathering().getHost().getId().equals(me.getId())) // 중복 방지
                 .forEach(participant -> {
                     Gathering gathering = participant.getGathering();
                     long pendingCount = gatheringParticipantRepository
@@ -118,69 +120,78 @@ public class ActiveMatchService {
         // 1. 퀵매칭 완료 내역
         matchResultRepository.findActiveByUserId(me.getId(), MatchResult.MatchResultStatus.COMPLETED)
                 .forEach(matchResult -> {
-                        UserProfile partner = matchResult.getUserA().getId().equals(me.getId())
-                                ? matchResult.getUserB() : matchResult.getUserA();
+                    UserProfile partner = matchResult.getUserA().getId().equals(me.getId())
+                            ? matchResult.getUserB() : matchResult.getUserA();
 
-                        boolean reviewed = reviewRepository
-                                .existsByReviewer_IdAndMatchResultId(me.getId(), matchResult.getId());
+                    boolean reviewed = reviewRepository
+                            .existsByReviewer_IdAndMatchResultId(me.getId(), matchResult.getId());
 
-                        result.add(MatchHistoryResponse.builder()
-                                .id(matchResult.getId())
-                                .type("PARTNER")
-                                .status("COMPLETED")
-                                .partnerName(partner.getName())
-                                .partnerProfileImageUrl(partner.getProfileImageUrl())
-                                .partnerDepartment(partner.getDepartment())
-                                .partnerStudentNumber(partner.getStudentId())
-                                .matchedAt(matchResult.getCreatedAt())
-                                .reviewed(reviewed)
-                                .build());
+                    result.add(MatchHistoryResponse.builder()
+                            .id(matchResult.getId())
+                            .type("PARTNER")
+                            .status("COMPLETED")
+                            .partnerName(partner.getName())
+                            .partnerProfileImageUrl(partner.getProfileImageUrl())
+                            .partnerDepartment(partner.getDepartment())
+                            .partnerStudentNumber(partner.getStudentId())
+                            .matchedAt(matchResult.getCreatedAt())
+                            .reviewed(reviewed)
+                            .build());
                 });
 
         // 2. 일반 모집 완료 내역 (방장)
         gatheringRepository.findByHost_IdAndStatus(me.getId(), Gathering.Status.COMPLETED)
                 .forEach(gathering -> {
-                        boolean reviewed = reviewRepository
-                                .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+                    boolean reviewed = reviewRepository
+                            .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                        result.add(MatchHistoryResponse.builder()
-                                .id(gathering.getId())
-                                .type("GATHERING")
-                                .status("COMPLETED")
-                                .role("HOST")
-                                .location(gathering.getVenue())
-                                .sportType(gathering.getSportType())
-                                .scheduledAt(gathering.getScheduledAt())
-                                .reviewed(reviewed)
-                                .build());
+                    result.add(MatchHistoryResponse.builder()
+                            .id(gathering.getId())
+                            .type("GATHERING")
+                            .status("COMPLETED")
+                            .role("HOST")
+                            .location(gathering.getVenue())
+                            .sportType(gathering.getSportType())
+                            .scheduledAt(gathering.getScheduledAt())
+                            .reviewed(reviewed)
+                            .build());
                 });
 
-        // 3. 일반 모집 완료 내역 (참여자)
+        // 3. 일반 모집 완료 내역 (참여자, 본인이 HOST인 경우 제외)
         gatheringParticipantRepository.findByUser_IdAndStatus(me.getId(), GatheringParticipant.Status.ACCEPTED)
                 .stream()
                 .filter(p -> p.getGathering().getStatus() == Gathering.Status.COMPLETED)
+                .filter(p -> !p.getGathering().getHost().getId().equals(me.getId())) // 중복 방지
                 .forEach(participant -> {
-                        Gathering gathering = participant.getGathering();
-                        UserProfile host = gathering.getHost();
-                        boolean reviewed = reviewRepository
-                                .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+                    Gathering gathering = participant.getGathering();
+                    UserProfile host = gathering.getHost();
+                    boolean reviewed = reviewRepository
+                            .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                        result.add(MatchHistoryResponse.builder()
-                                .id(gathering.getId())
-                                .type("GATHERING")
-                                .status("COMPLETED")
-                                .role("GUEST")
-                                .partnerName(host.getName())
-                                .partnerProfileImageUrl(host.getProfileImageUrl())
-                                .partnerDepartment(host.getDepartment())
-                                .partnerStudentNumber(host.getStudentId())
-                                .location(gathering.getVenue())
-                                .sportType(gathering.getSportType())
-                                .scheduledAt(gathering.getScheduledAt())
-                                .reviewed(reviewed)
-                                .build());
+                    result.add(MatchHistoryResponse.builder()
+                            .id(gathering.getId())
+                            .type("GATHERING")
+                            .status("COMPLETED")
+                            .role("GUEST")
+                            .partnerName(host.getName())
+                            .partnerProfileImageUrl(host.getProfileImageUrl())
+                            .partnerDepartment(host.getDepartment())
+                            .partnerStudentNumber(host.getStudentId())
+                            .location(gathering.getVenue())
+                            .sportType(gathering.getSportType())
+                            .scheduledAt(gathering.getScheduledAt())
+                            .reviewed(reviewed)
+                            .build());
                 });
 
-        return result;
-        }
+        // 방어적 중복 제거 (id + type 기준)
+        return result.stream()
+                .collect(Collectors.toMap(
+                        r -> r.getType() + "-" + r.getId(),
+                        r -> r,
+                        (a, b) -> a
+                ))
+                .values().stream()
+                .toList();
+    }
 }
