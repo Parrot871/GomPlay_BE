@@ -50,4 +50,22 @@ public class GatheringScheduler {
     }
     log.info("부스트 만료 처리: {}건", boostedGatherings.size());
     }
+
+    // 매 10분마다 EXPIRED 처리
+    @Scheduled(fixedRate = 600000)
+    @Transactional
+    public void expireGathering() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Gathering> gatherings = gatheringRepository
+                .findByStatusAndScheduledAtBefore(Gathering.Status.OPEN, now);
+
+        for (Gathering gathering : gatherings) {
+            gathering.updateStatus(Gathering.Status.EXPIRED);
+            log.info("만료 처리: gatheringId={}", gathering.getId());
+        }
+
+        log.info("만료 처리 완료: {}건", gatherings.size());
+    }
+
 }

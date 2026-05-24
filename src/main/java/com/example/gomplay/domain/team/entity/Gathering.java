@@ -69,7 +69,7 @@ public class Gathering {
     private LocalDateTime updatedAt;
 
     public enum Status {
-        OPEN, CLOSED, CANCELLED, COMPLETED
+        OPEN, CLOSED, CANCELLED, COMPLETED, EXPIRED
     }
 
     @Column(name = "host_completed", nullable = false)
