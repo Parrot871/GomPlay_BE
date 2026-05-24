@@ -324,40 +324,86 @@ public class GatheringService {
 
     @Transactional
     public void completeGathering(Long userId, Long gatheringId) {
-         UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
-               .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-         Gathering gathering = gatheringRepository.findById(gatheringId)
-              .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+        Gathering gathering = gatheringRepository.findById(gatheringId)
+                .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
 
         // 방장인 경우
-         if (gathering.getHost().getId().equals(user.getId())) {
-         gathering.completeByHost();
-         } else {
+        if (gathering.getHost().getId().equals(user.getId())) {
+                gathering.completeByHost();
+        } else {
                 // 참여자인 경우
                 GatheringParticipant participant = gatheringParticipantRepository
-                  .findByGathering_IdAndUser_Id(gatheringId, user.getId())
-                 .orElseThrow(() -> new IllegalArgumentException("참여자를 찾을 수 없습니다."));
-         participant.complete();
+                        .findByGathering_IdAndUser_Id(gatheringId, user.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("참여자를 찾을 수 없습니다."));
+                participant.complete();
         }
 
         // 전원 완료 여부 체크 (방장 + 모든 참여자)
-         boolean hostCompleted = gathering.isHostCompleted();
-         boolean allParticipantsCompleted = gatheringParticipantRepository
-                 .findByGathering_Id(gatheringId)
-                 .stream()
-                 .allMatch(GatheringParticipant::isCompleted);
+        boolean hostCompleted = gathering.isHostCompleted();
+        boolean allParticipantsCompleted = gatheringParticipantRepository
+                .findByGathering_Id(gatheringId)
+                .stream()
+                .allMatch(GatheringParticipant::isCompleted);
 
         if (hostCompleted && allParticipantsCompleted) {
                 gathering.updateStatus(Gathering.Status.COMPLETED);
 
                 // 운동 완료 포인트 지급 +4P
                 pointService.addPoint(user, 4, "exercise_complete", null);
+
+                // 전원 완료 시 리뷰 가능 알림 (방장 + 모든 참여자)
+                List<GatheringParticipant> participants = gatheringParticipantRepository
+                        .findByGathering_Id(gatheringId);
+
+                // 방장에게 알림
+                notificationService.createNotification(
+                gathering.getHost(),
+                Notification.NotificationType.review_available,
+                "평가 가능",
+                "'" + gathering.getTitle() + "' 운동이 완료됐어요! 상대방을 평가해보세요.",
+                gatheringId
+                );
+
+                // 참여자들에게 알림
+                participants.forEach(p -> notificationService.createNotification(
+                p.getUser(),
+                Notification.NotificationType.review_available,
+                "평가 가능",
+                "'" + gathering.getTitle() + "' 운동이 완료됐어요! 상대방을 평가해보세요.",
+                gatheringId
+                ));
+
+        } else {
+                // 한쪽만 완료 버튼 눌렀을 때 → match_end_confirm 알림
+                // 방장이 눌렀으면 참여자들에게, 참여자가 눌렀으면 방장에게
+                if (gathering.getHost().getId().equals(user.getId())) {
+                // 참여자들에게 알림
+                gatheringParticipantRepository.findByGathering_Id(gatheringId)
+                        .forEach(p -> notificationService.createNotification(
+                        p.getUser(),
+                        Notification.NotificationType.match_end_confirm,
+                        "매칭 종료 대기",
+                        "'" + gathering.getTitle() + "' 방장이 운동 완료를 눌렀어요! 확인해주세요.",
+                        gatheringId
+                        ));
+                } else {
+                // 방장에게 알림
+                notificationService.createNotification(
+                        gathering.getHost(),
+                        Notification.NotificationType.match_end_confirm,
+                        "매칭 종료 대기",
+                        user.getName() + "님이 운동 완료를 눌렀어요! 확인해주세요.",
+                        gatheringId
+                );
                 }
-        // 개인 완료 시 +4p 지급        
-        pointService.addPoint(user, 4, "exercise_complete", null);
         }
 
+        // 개인 완료 시 +4p 지급
+        pointService.addPoint(user, 4, "exercise_complete", null);
+        }
 
         @Transactional(readOnly = true)
         public List<GatheringHistoryResponse> getGatheringHistory(Long userId) {
