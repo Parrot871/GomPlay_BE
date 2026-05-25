@@ -145,23 +145,37 @@ public class ActiveMatchService {
                             .build());
                 });
 
-        // 2. 일반 모집 완료 내역 (방장)
+        // 2. 일반 모집 완료 내역 (방장) 
         gatheringRepository.findByHost_IdAndStatus(me.getId(), Gathering.Status.COMPLETED)
                 .forEach(gathering -> {
-                    boolean reviewed = reviewRepository
-                            .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+                boolean reviewed = reviewRepository
+                        .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                    result.add(MatchHistoryResponse.builder()
-                            .id(gathering.getId())
-                            .type("GATHERING")
-                            .status("COMPLETED")
-                            .role("HOST")
-                            .location(gathering.getVenue())
-                            .sportType(gathering.getSportType())
-                            .scheduledAt(gathering.getScheduledAt() != null ?
+                // 첫 번째 ACCEPTED 참여자 정보 가져오기
+                GatheringParticipant acceptedParticipant = gatheringParticipantRepository
+                        .findByGathering_Id(gathering.getId())
+                        .stream()
+                        .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
+                        .findFirst()
+                        .orElse(null);
+
+                UserProfile partner = acceptedParticipant != null ? acceptedParticipant.getUser() : null;
+
+                result.add(MatchHistoryResponse.builder()
+                        .id(gathering.getId())
+                        .type("GATHERING")
+                        .status("COMPLETED")
+                        .role("HOST")
+                        .partnerName(partner != null ? partner.getName() : null)
+                        .partnerProfileImageUrl(partner != null ? partner.getProfileImageUrl() : null)
+                        .partnerDepartment(partner != null ? partner.getDepartment() : null)
+                        .partnerStudentNumber(partner != null ? partner.getStudentId() : null)
+                        .location(gathering.getVenue())
+                        .sportType(gathering.getSportType())
+                        .scheduledAt(gathering.getScheduledAt() != null ?
                                 gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
-                            .reviewed(reviewed)
-                            .build());
+                        .reviewed(reviewed)
+                        .build());
                 });
 
         // 3. 일반 모집 완료 내역 (참여자, 본인이 HOST인 경우 제외)

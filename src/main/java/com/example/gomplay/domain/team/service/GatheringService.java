@@ -83,6 +83,13 @@ public class GatheringService {
 
         // 모집글 등록 포인트 지급 +2P
         pointService.addPoint(host, 2, "gathering", saved.getId());
+        notificationService.createNotification(
+        host,
+        Notification.NotificationType.point,
+        "포인트 적립",
+        "+2P가 적립되었어요! (모집글 등록)",
+        null
+        );
 
         return new GatheringCreateResponse(saved);
     }

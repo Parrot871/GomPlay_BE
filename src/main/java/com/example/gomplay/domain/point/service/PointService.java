@@ -10,8 +10,6 @@ import com.example.gomplay.domain.user.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.gomplay.domain.notification.entity.Notification;
-import com.example.gomplay.domain.notification.service.NotificationService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,7 +21,6 @@ public class PointService {
     private final PointLogRepository pointLogRepository;
     private final UserProfileRepository userProfileRepository;
     private final GatheringRepository gatheringRepository;
-    private final NotificationService notificationService;
 
     // 포인트 내역 조회
     @Transactional(readOnly = true)
@@ -56,18 +53,5 @@ public class PointService {
                 .build();
 
         pointLogRepository.save(pointLog);
-
-        // 포인트 변동 알림
-        String pointMessage = delta > 0
-            ? "+" + delta + "P가 적립되었어요! (" + reason + ")"
-            : delta + "P가 차감되었어요! (" + reason + ")";
-
-        notificationService.createNotification(
-            user,
-            Notification.NotificationType.point,
-            "포인트 변동",
-            pointMessage,
-            null
-        );
     }
 }

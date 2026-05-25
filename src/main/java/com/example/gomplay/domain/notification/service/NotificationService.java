@@ -27,34 +27,32 @@ public class NotificationService {
 
         List<Notification> notifications;
 
-       if ("partner".equals(tab)) {
+        if ("partner".equals(tab)) {
             notifications = notificationRepository
-            .findByUserProfile_IdAndTypeInOrderByCreatedAtDesc(
+                .findByUserProfile_IdAndTypeInOrderByCreatedAtDesc(
                     user.getId(),
                     List.of(
-                            Notification.NotificationType.match_request,
-                            Notification.NotificationType.match_accepted,
-                            Notification.NotificationType.match_rejected
+                        Notification.NotificationType.match_request,
+                        Notification.NotificationType.match_accepted,
+                        Notification.NotificationType.match_rejected
                     )
-            );
-            } else if ("general".equals(tab)) {
-                 notifications = notificationRepository
-                    .findByUserProfile_IdAndTypeInOrderByCreatedAtDesc(
+                );
+        } else if ("general".equals(tab)) {
+            notifications = notificationRepository
+                .findByUserProfile_IdAndTypeInOrderByCreatedAtDesc(
                     user.getId(),
                     List.of(
-                            Notification.NotificationType.gathering,
-                            Notification.NotificationType.gathering_request,
-                            Notification.NotificationType.review_available,
-                            Notification.NotificationType.match_end_confirm,
-                            Notification.NotificationType.match_auto_ended
+                        Notification.NotificationType.gathering,
+                        Notification.NotificationType.gathering_request,
+                        Notification.NotificationType.review_available,
+                        Notification.NotificationType.match_end_confirm,
+                        Notification.NotificationType.match_auto_ended
                     )
-            );
-} else {
-    // 전체 탭 - 모든 알림
-    notifications = notificationRepository
-            .findByUserProfile_IdOrderByCreatedAtDesc(user.getId());
-}
-
+                );
+        } else {
+            notifications = notificationRepository
+                .findByUserProfile_IdOrderByCreatedAtDesc(user.getId());
+        }
 
         return notifications.stream()
                 .map(NotificationResponse::new)
@@ -85,20 +83,18 @@ public class NotificationService {
                 .isRead(false)
                 .build();
         notificationRepository.save(notification);
-   }
+    }
 
-   // 개별 읽음 처리
-   @Transactional
-   public void markAsRead(Long userId, Long notificationId) {
+    // 개별 읽음 처리
+    @Transactional
+    public void markAsRead(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new IllegalArgumentException("알림을 찾을 수 없습니다."));
 
         if (!notification.getUserProfile().getId().equals(userId)) {
-                throw new IllegalArgumentException("권한이 없습니다.");
+            throw new IllegalArgumentException("권한이 없습니다.");
         }
 
         notification.markAsRead();
     }
-
-
 }
