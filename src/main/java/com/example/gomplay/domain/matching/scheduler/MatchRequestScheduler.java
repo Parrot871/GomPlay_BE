@@ -18,7 +18,7 @@ public class MatchRequestScheduler {
 
     private final MatchRequestRepository matchRequestRepository;
 
-    @Scheduled(fixedDelay = 10000) // 10초마다 실행
+    @Scheduled(fixedDelay = 5000) // 10초마다 실행
     @Transactional
     public void timeoutExpiredRequests() {
         List<MatchRequest> expiredRequests = matchRequestRepository

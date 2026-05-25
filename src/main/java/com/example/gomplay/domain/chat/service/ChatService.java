@@ -135,11 +135,11 @@ public class ChatService {
     }
 
     // 12시간 지난 IN_PROGRESS 자동 완료 (1분마다 체크)
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 5000)
     @Transactional
     public void autoComplete() {
         log.info("autoComplete 스케줄러 실행");
-        LocalDateTime threshold = LocalDateTime.now().minusMinutes(2); // minusHours(2) → minusMinutes(2) 2분에서 24시간으로 수정해야함
+        LocalDateTime threshold = LocalDateTime.now().minusSeconds(20); // 20초
         List<ChatRoom> rooms = chatRoomRepository
                 .findByCreatedAtBeforeAndMatchResult_Status(
                         threshold, MatchResult.MatchResultStatus.IN_PROGRESS);

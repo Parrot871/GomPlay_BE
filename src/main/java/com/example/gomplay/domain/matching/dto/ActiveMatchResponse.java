@@ -128,7 +128,7 @@ public class ActiveMatchResponse {
         res.pendingCount = 0;
         res.reviewed = reviewed;
         res.canComplete = matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS
-                && matchResult.getCreatedAt().plusMinutes(1).isBefore(LocalDateTime.now());
+                && matchResult.getCreatedAt().plusSeconds(10).isBefore(LocalDateTime.now());
         return res;
     }
 
