@@ -48,7 +48,7 @@ public class ActiveMatchService {
         // GATHERING - 내가 HOST인 OPEN 모집글
         gatheringRepository.findByHost_Id(me.getId())
                 .stream()
-                .filter(g -> g.getStatus() == Gathering.Status.OPEN)
+                .filter(g -> g.getStatus() == Gathering.Status.OPEN || g.getStatus() == Gathering.Status.CLOSED)
                 .forEach(gathering -> {
                     GatheringParticipant acceptedParticipant = gatheringParticipantRepository
                             .findByGathering_Id(gathering.getId())
@@ -70,7 +70,7 @@ public class ActiveMatchService {
         // GATHERING - 내가 ACCEPTED 참여자인 OPEN 모집글 (본인이 HOST인 경우 제외)
         gatheringParticipantRepository.findByUser_IdAndStatus(me.getId(), GatheringParticipant.Status.ACCEPTED)
                 .stream()
-                .filter(p -> p.getGathering().getStatus() == Gathering.Status.OPEN)
+                .filter(p -> p.getGathering().getStatus() == Gathering.Status.OPEN || p.getGathering().getStatus() == Gathering.Status.CLOSED)
                 .filter(p -> !p.getGathering().getHost().getId().equals(me.getId()))
                 .forEach(participant -> {
                     Gathering gathering = participant.getGathering();
@@ -85,7 +85,7 @@ public class ActiveMatchService {
         // GATHERING - 내가 PENDING 신청자인 OPEN 모집글
         gatheringParticipantRepository.findByUser_IdAndStatus(me.getId(), GatheringParticipant.Status.PENDING)
                 .stream()
-                .filter(p -> p.getGathering().getStatus() == Gathering.Status.OPEN)
+                .filter(p -> p.getGathering().getStatus() == Gathering.Status.OPEN || p.getGathering().getStatus() == Gathering.Status.CLOSED)
                 .forEach(participant -> {
                     Gathering gathering = participant.getGathering();
                     boolean reviewed = reviewRepository

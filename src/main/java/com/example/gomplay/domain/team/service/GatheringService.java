@@ -276,7 +276,7 @@ public class GatheringService {
         long acceptedCount = gatheringParticipantRepository
                 .countByGathering_IdAndStatus(gatheringId, GatheringParticipant.Status.ACCEPTED);
 
-        if (acceptedCount >= gathering.getMaxParticipants() - 1) {
+        if (acceptedCount >= gathering.getMaxParticipants()) {
                 gathering.updateStatus(Gathering.Status.CLOSED);
         }
 
