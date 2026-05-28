@@ -9,8 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+
 
 import java.security.Principal;
 import java.util.List;
@@ -63,8 +66,11 @@ public class GroupChatController {
     public void sendMessage(
             @DestinationVariable Long roomId,
             @Payload Map<String, String> payload,
-            Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
-        groupChatService.sendMessage(userId, roomId, payload.get("content"));
+            SimpMessageHeaderAccessor headerAccessor) {
+        Long userProfileId = (Long) headerAccessor.getSessionAttributes().get("userProfileId");
+        if (userProfileId == null) {
+            throw new IllegalArgumentException("인증되지 않은 사용자입니다.");
+        }
+        groupChatService.sendMessageByProfileId(userProfileId, roomId, payload.get("content"));
     }
 }

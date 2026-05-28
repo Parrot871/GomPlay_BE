@@ -180,4 +180,38 @@ public class GroupChatService {
         return (int) gatheringParticipantRepository
                 .countByGathering_IdAndStatus(gatheringId, GatheringParticipant.Status.ACCEPTED) + 1;
     }
+
+    // WebSocket용 메시지 전송 (userProfileId 기반)
+    @Transactional
+    public void sendMessageByProfileId(Long userProfileId, Long roomId, String content) {
+        GroupChatRoom room = groupChatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("채팅방을 찾을 수 없습니다."));
+
+        UserProfile sender = userProfileRepository.findById(userProfileId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        validateParticipantByProfileId(room, userProfileId);
+
+        GroupChatMessage message = GroupChatMessage.createText(room, sender, content);
+        groupChatMessageRepository.save(message);
+
+        GroupChatMessageDto dto = GroupChatMessageDto.of(message);
+        messagingTemplate.convertAndSend(
+                "/topic/group-chat/" + roomId,
+                WsMessage.builder().type("NEW_MESSAGE").data(dto).build()
+        );
+ }
+
+    private void validateParticipantByProfileId(GroupChatRoom room, Long userProfileId) {
+        Long gatheringId = room.getGathering().getId();
+        boolean isHost = room.getGathering().getHost().getId().equals(userProfileId);
+        boolean isAccepted = gatheringParticipantRepository
+                .findByUser_IdAndStatus(userProfileId, GatheringParticipant.Status.ACCEPTED)
+                .stream()
+                .anyMatch(p -> p.getGathering().getId().equals(gatheringId));
+
+        if (!isHost && !isAccepted) {
+                throw new IllegalArgumentException("채팅방 참여자가 아닙니다.");
+        }
+    }
 }
