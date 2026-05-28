@@ -17,15 +17,15 @@ import com.example.gomplay.domain.team.dto.GatheringListResponse;
 import com.example.gomplay.domain.team.dto.GatheringParticipantResponse;
 import com.example.gomplay.domain.team.entity.GatheringParticipant;
 import com.example.gomplay.domain.team.repository.GatheringParticipantRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import com.example.gomplay.domain.team.dto.GatheringDetailResponse;
 import com.example.gomplay.domain.team.dto.GatheringHistoryResponse;
 import com.example.gomplay.domain.point.repository.PointLogRepository;
 import com.example.gomplay.domain.notification.entity.Notification;
 import com.example.gomplay.domain.notification.service.NotificationService;
+import com.example.gomplay.domain.groupchat.entity.GroupChatRoom;
+import com.example.gomplay.domain.groupchat.repository.GroupChatRoomRepository;
+
 
 
 import java.util.stream.Collectors;
@@ -35,6 +35,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
@@ -52,6 +57,7 @@ public class GatheringService {
     private final ReviewRepository reviewRepository;
     private final PointLogRepository pointLogRepository;
     private final NotificationService notificationService;
+    private final GroupChatRoomRepository groupChatRoomRepository;
 
     @Transactional
     public GatheringCreateResponse createGathering(Long userId, GatheringCreateRequest request) {
@@ -283,8 +289,12 @@ public class GatheringService {
         long acceptedCount = gatheringParticipantRepository
                 .countByGathering_IdAndStatus(gatheringId, GatheringParticipant.Status.ACCEPTED);
 
-        if (acceptedCount >= gathering.getMaxParticipants()) {
+        if (acceptedCount >= gathering.getMaxParticipants() - 1) {
                 gathering.updateStatus(Gathering.Status.CLOSED);
+
+                // 채팅방 자동 생성
+                groupChatRoomRepository.findByGathering_Id(gatheringId)
+                        .orElseGet(() -> groupChatRoomRepository.save(GroupChatRoom.create(gathering))); 
         }
 
         // 신청자에게 알림
