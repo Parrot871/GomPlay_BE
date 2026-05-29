@@ -31,6 +31,7 @@ public class ActiveMatchResponse {
     private long pendingCount;
     private boolean reviewed;
     private boolean canComplete;
+    private String canCompleteReason; // NOT_STARTED, ALREADY_REQUESTED, AVAILABLE
 
     private static final DateTimeFormatter FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -44,36 +45,50 @@ public class ActiveMatchResponse {
     // GATHERING용 (HOST / ACCEPTED GUEST 공통)
     public static ActiveMatchResponse ofGathering(
             Gathering gathering, UserProfile me, UserProfile partner,
-            long pendingCount, boolean reviewed) {
+            long pendingCount, boolean reviewed, boolean iCompleted) {
 
-        boolean isHost = gathering.getHost().getId().equals(me.getId());
+            boolean isHost = gathering.getHost().getId().equals(me.getId());
 
-        ActiveMatchResponse res = new ActiveMatchResponse();
-        res.id = gathering.getId();
-        res.type = "GATHERING";
-        res.status = toGatheringStatus(gathering);
-        res.role = isHost ? "HOST" : "GUEST";
+            ActiveMatchResponse res = new ActiveMatchResponse();
+            res.id = gathering.getId();
+            res.type = "GATHERING";
+            res.status = toGatheringStatus(gathering);
+            res.role = isHost ? "HOST" : "GUEST";
 
-        UserProfile displayPartner = isHost ? partner : gathering.getHost();
-        res.partnerName = displayPartner != null ? displayPartner.getName() : null;
-        res.partnerProfileImageUrl = displayPartner != null ? displayPartner.getProfileImageUrl() : null;
-        res.partnerDepartment = displayPartner != null ? displayPartner.getDepartment() : null;
-        res.partnerStudentNumber = displayPartner != null ? displayPartner.getStudentId() : null;
+            UserProfile displayPartner = isHost ? partner : gathering.getHost();
+            res.partnerName = displayPartner != null ? displayPartner.getName() : null;
+            res.partnerProfileImageUrl = displayPartner != null ? displayPartner.getProfileImageUrl() : null;
+            res.partnerDepartment = displayPartner != null ? displayPartner.getDepartment() : null;
+            res.partnerStudentNumber = displayPartner != null ? displayPartner.getStudentId() : null;
 
-        res.location = gathering.getVenue();
-        res.scheduledAt = toZonedString(gathering.getScheduledAt());
-        res.scheduledEndAt = toZonedString(gathering.getScheduledEndAt());
-        res.scheduledTime = formatScheduledTime(gathering.getScheduledAt(), gathering.getScheduledEndAt());
-        res.difficulty = gathering.getDifficulty();
-        res.sportType = gathering.getSportType();
-        res.chatRoomId = null;
-        res.matchedAt = null;
-        res.pendingCount = pendingCount;
-        res.reviewed = reviewed;
-        res.canComplete = gathering.getScheduledEndAt() != null
-                && gathering.getScheduledEndAt().isBefore(LocalDateTime.now())
-                && gathering.getStatus() == Gathering.Status.OPEN;
-        return res;
+            res.location = gathering.getVenue();
+            res.scheduledAt = toZonedString(gathering.getScheduledAt());
+            res.scheduledEndAt = toZonedString(gathering.getScheduledEndAt());
+            res.scheduledTime = formatScheduledTime(gathering.getScheduledAt(), gathering.getScheduledEndAt());
+            res.difficulty = gathering.getDifficulty();
+            res.sportType = gathering.getSportType();
+            res.chatRoomId = null;
+            res.matchedAt = null;
+            res.pendingCount = pendingCount;
+            res.reviewed = reviewed;
+
+            // canCompleteReason 판단
+            LocalDateTime now = LocalDateTime.now();
+            boolean scheduledPassed = gathering.getScheduledAt() != null
+                    && gathering.getScheduledAt().isBefore(now);
+
+            if (!scheduledPassed) {
+                res.canComplete = false;
+                res.canCompleteReason = "NOT_STARTED";
+            } else if (iCompleted) {
+                res.canComplete = false;
+                res.canCompleteReason = "ALREADY_REQUESTED";
+            } else {
+                res.canComplete = true;
+                res.canCompleteReason = "AVAILABLE";
+            }
+
+            return res;
     }
 
     // GATHERING PENDING 신청자용

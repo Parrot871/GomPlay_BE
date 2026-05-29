@@ -66,7 +66,8 @@ public class ActiveMatchService {
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                    result.add(ActiveMatchResponse.ofGathering(gathering, me, partner, pendingCount, reviewed));
+                    boolean iCompleted = gathering.isHostCompleted();
+                    result.add(ActiveMatchResponse.ofGathering(gathering, me, partner, pendingCount, reviewed, iCompleted));
                 });
 
         // GATHERING - 내가 ACCEPTED 참여자인 OPEN 모집글 (본인이 HOST인 경우 제외)
@@ -81,7 +82,8 @@ public class ActiveMatchService {
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                    result.add(ActiveMatchResponse.ofGathering(gathering, me, gathering.getHost(), pendingCount, reviewed));
+                    boolean iCompleted = participant.isCompleted();    
+                    result.add(ActiveMatchResponse.ofGathering(gathering, me, gathering.getHost(), pendingCount, reviewed, iCompleted));
                 });
 
         // GATHERING - 내가 PENDING 신청자인 OPEN 모집글
