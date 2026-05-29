@@ -25,6 +25,8 @@ import com.example.gomplay.domain.notification.entity.Notification;
 import com.example.gomplay.domain.notification.service.NotificationService;
 import com.example.gomplay.domain.groupchat.entity.GroupChatRoom;
 import com.example.gomplay.domain.groupchat.repository.GroupChatRoomRepository;
+import com.example.gomplay.domain.groupchat.repository.GroupChatRoomRepository;
+import com.example.gomplay.global.websocket.dto.WsMessage;
 
 
 
@@ -44,6 +46,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 
 @Service
@@ -58,6 +61,7 @@ public class GatheringService {
     private final PointLogRepository pointLogRepository;
     private final NotificationService notificationService;
     private final GroupChatRoomRepository groupChatRoomRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public GatheringCreateResponse createGathering(Long userId, GatheringCreateRequest request) {
@@ -370,6 +374,14 @@ public class GatheringService {
 
                 // 운동 완료 포인트 지급 +4P
                 pointService.addPoint(user, 4, "exercise_complete", null);
+
+                // 그룹 채팅방에 GATHERING_COMPLETED push
+                groupChatRoomRepository.findByGathering_Id(gatheringId).ifPresent(room -> {
+                        messagingTemplate.convertAndSend(
+                        "/topic/group-chat/" + room.getId(),
+                        WsMessage.builder().type("GATHERING_COMPLETED").data(null).build()
+                        );
+                });
 
                 // 전원 완료 시 리뷰 가능 알림 (방장 + 모든 참여자)
                 List<GatheringParticipant> participants = gatheringParticipantRepository

@@ -14,6 +14,8 @@ import com.example.gomplay.domain.team.repository.GatheringParticipantRepository
 import com.example.gomplay.domain.team.repository.GatheringRepository;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
+import com.example.gomplay.domain.groupchat.dto.GroupChatParticipantDto;
+import com.example.gomplay.domain.review.repository.ReviewRepository;
 import com.example.gomplay.global.websocket.dto.WsMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -33,6 +35,7 @@ public class GroupChatService {
     private final GatheringParticipantRepository gatheringParticipantRepository;
     private final UserProfileRepository userProfileRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ReviewRepository reviewRepository;
 
     // 채팅방 목록 조회
     @Transactional(readOnly = true)
@@ -70,13 +73,39 @@ public class GroupChatService {
                 .collect(Collectors.toList());
     }
 
-    // 채팅방 입장
+    //채팅방 입장
     @Transactional(readOnly = true)
     public GroupChatRoomDetailResponse enterRoom(Long userId, Long roomId) {
         GroupChatRoom room = groupChatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("채팅방을 찾을 수 없습니다."));
 
+        UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
         validateParticipant(room, userId);
+
+        Long gatheringId = room.getGathering().getId();
+        boolean isHost = room.getGathering().getHost().getId().equals(user.getId());
+
+        // reviewed 확인
+        boolean reviewed = reviewRepository.existsByReviewer_IdAndGatheringId(user.getId(), gatheringId);
+
+        // 참여자 목록 구성
+        UserProfile host = room.getGathering().getHost();
+        List<GroupChatParticipantDto> participants = new java.util.ArrayList<>();
+        participants.add(GroupChatParticipantDto.of(host.getId(), host.getName(), host.getProfileImageUrl(), true));
+
+        gatheringParticipantRepository.findByGathering_Id(gatheringId)
+                .stream()
+                .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
+                .forEach(p -> participants.add(
+                        GroupChatParticipantDto.of(
+                        p.getUser().getId(),
+                        p.getUser().getName(),
+                        p.getUser().getProfileImageUrl(),
+                        false
+                        )
+                ));
 
         List<GroupChatMessageDto> messages = groupChatMessageRepository
                 .findByRoom_IdOrderBySentAtAsc(roomId)
@@ -84,8 +113,9 @@ public class GroupChatService {
                 .map(GroupChatMessageDto::of)
                 .collect(Collectors.toList());
 
-        int participantCount = getParticipantCount(room.getGathering().getId());
-        return GroupChatRoomDetailResponse.of(room, messages, participantCount);
+        int participantCount = getParticipantCount(gatheringId);
+
+        return GroupChatRoomDetailResponse.of(room, messages, participantCount, isHost, reviewed, participants);
     }
 
     // 일반 메시지 전송

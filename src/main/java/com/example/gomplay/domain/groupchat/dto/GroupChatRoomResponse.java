@@ -14,6 +14,7 @@ public class GroupChatRoomResponse {
     private int participantCount;
     private GroupChatMessageDto lastMessage;
     private String createdAt;
+    private String hostProfileImageUrl;
 
     private static final DateTimeFormatter FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -29,6 +30,7 @@ public class GroupChatRoomResponse {
         dto.lastMessage = lastMessage;
         dto.createdAt = room.getCreatedAt() != null ?
             room.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null;
+        dto.hostProfileImageUrl = room.getGathering().getHost().getProfileImageUrl();
         return dto;
     }
 }
