@@ -139,7 +139,7 @@ public class ChatService {
     @Transactional
     public void autoComplete() {
         log.info("autoComplete 스케줄러 실행");
-        LocalDateTime threshold = LocalDateTime.now().minusSeconds(20); // 20초
+        LocalDateTime threshold = LocalDateTime.now().minusMinutes(1); // 20초
         List<ChatRoom> rooms = chatRoomRepository
                 .findByCreatedAtBeforeAndMatchResult_Status(
                         threshold, MatchResult.MatchResultStatus.IN_PROGRESS);

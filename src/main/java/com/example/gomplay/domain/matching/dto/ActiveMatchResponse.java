@@ -31,8 +31,7 @@ public class ActiveMatchResponse {
     private long pendingCount;
     private boolean reviewed;
     private boolean canComplete;
-    private String canCompleteReason; // NOT_STARTED, ALREADY_REQUESTED, AVAILABLE
-
+    private String canCompleteReason; // NOT_STARTED, ALREADY_REQUESTED, PARTNER_REQUESTED, AVAILABLE
 
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -47,19 +46,19 @@ public class ActiveMatchResponse {
             Gathering gathering, UserProfile me, UserProfile partner,
             long pendingCount, boolean reviewed, boolean iCompleted) {
 
-            boolean isHost = gathering.getHost().getId().equals(me.getId());
+        boolean isHost = gathering.getHost().getId().equals(me.getId());
 
-            ActiveMatchResponse res = new ActiveMatchResponse();
-            res.id = gathering.getId();
-            res.type = "GATHERING";
-            res.status = toGatheringStatus(gathering);
-            res.role = isHost ? "HOST" : "GUEST";
+        ActiveMatchResponse res = new ActiveMatchResponse();
+        res.id = gathering.getId();
+        res.type = "GATHERING";
+        res.status = toGatheringStatus(gathering);
+        res.role = isHost ? "HOST" : "GUEST";
 
-            UserProfile displayPartner = isHost ? partner : gathering.getHost();
-            res.partnerName = displayPartner != null ? displayPartner.getName() : null;
-            res.partnerProfileImageUrl = displayPartner != null ? displayPartner.getProfileImageUrl() : null;
-            res.partnerDepartment = displayPartner != null ? displayPartner.getDepartment() : null;
-            res.partnerStudentNumber = displayPartner != null ? displayPartner.getStudentId() : null;
+        UserProfile displayPartner = isHost ? partner : gathering.getHost();
+        res.partnerName = displayPartner != null ? displayPartner.getName() : null;
+        res.partnerProfileImageUrl = displayPartner != null ? displayPartner.getProfileImageUrl() : null;
+        res.partnerDepartment = displayPartner != null ? displayPartner.getDepartment() : null;
+        res.partnerStudentNumber = displayPartner != null ? displayPartner.getStudentId() : null;
 
         res.location = gathering.getVenue();
         res.scheduledAt = toZonedString(gathering.getScheduledAt());
@@ -140,13 +139,20 @@ public class ActiveMatchResponse {
         res.pendingCount = 0;
         res.reviewed = reviewed;
 
-        boolean iCompleted = matchResult.getUserA().getId().equals(me.getId())
-                ? matchResult.isUserACompleted()
-                : matchResult.isUserBCompleted();
+        boolean isUserA = matchResult.getUserA().getId().equals(me.getId());
+        boolean iCompleted = isUserA ? matchResult.isUserACompleted() : matchResult.isUserBCompleted();
+        boolean partnerCompleted = isUserA ? matchResult.isUserBCompleted() : matchResult.isUserACompleted();
 
         res.canComplete = !iCompleted
                 && matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS;
-        res.canCompleteReason = iCompleted ? "ALREADY_REQUESTED" : "AVAILABLE";
+
+        if (iCompleted) {
+            res.canCompleteReason = "ALREADY_REQUESTED";
+        } else if (partnerCompleted) {
+            res.canCompleteReason = "PARTNER_REQUESTED";
+        } else {
+            res.canCompleteReason = "AVAILABLE";
+        }
 
         return res;
     }

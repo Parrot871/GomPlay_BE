@@ -41,9 +41,8 @@ public class MatchController {
     @PatchMapping("/{matchId}/complete")
     public ResponseEntity<ApiResponse<Void>> completeMatch(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long matchId,
-            @RequestParam String type) {
-        matchCompleteService.completeMatch(userId, matchId, type);
+            @PathVariable Long matchId) {
+        matchCompleteService.completeMatch(userId, matchId);
         return ResponseEntity.ok(ApiResponse.success("완료 처리 성공", null));
     }
 }
