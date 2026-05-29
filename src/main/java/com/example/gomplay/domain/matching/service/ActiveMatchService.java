@@ -13,6 +13,7 @@ import com.example.gomplay.domain.team.repository.GatheringParticipantRepository
 import com.example.gomplay.domain.team.repository.GatheringRepository;
 import com.example.gomplay.domain.user.entity.UserProfile;
 import com.example.gomplay.domain.user.repository.UserProfileRepository;
+import com.example.gomplay.domain.groupchat.repository.GroupChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class ActiveMatchService {
     private final MatchResultRepository matchResultRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ReviewRepository reviewRepository;
+    private final GroupChatRoomRepository groupChatRoomRepository;
 
     private static final DateTimeFormatter FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -131,6 +133,10 @@ public class ActiveMatchService {
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndMatchResultId(me.getId(), matchResult.getId());
 
+                    Long chatRoomId = chatRoomRepository.findByMatchResult_Id(matchResult.getId())
+                            .map(chatRoom -> chatRoom.getId())
+                            .orElse(null);
+
                     result.add(MatchHistoryResponse.builder()
                             .id(matchResult.getId())
                             .type("PARTNER")
@@ -142,40 +148,48 @@ public class ActiveMatchService {
                             .matchedAt(matchResult.getCreatedAt() != null ?
                                 matchResult.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
                             .reviewed(reviewed)
+                            .chatRoomId(chatRoomId)
+                            .partnerUserId(partner.getAuthUser().getId())
                             .build());
                 });
 
-        // 2. 일반 모집 완료 내역 (방장) 
+        // 2. 일반 모집 완료 내역 (방장)
         gatheringRepository.findByHost_IdAndStatus(me.getId(), Gathering.Status.COMPLETED)
                 .forEach(gathering -> {
-                boolean reviewed = reviewRepository
-                        .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+                    boolean reviewed = reviewRepository
+                            .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                // 첫 번째 ACCEPTED 참여자 정보 가져오기
-                GatheringParticipant acceptedParticipant = gatheringParticipantRepository
-                        .findByGathering_Id(gathering.getId())
-                        .stream()
-                        .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
-                        .findFirst()
-                        .orElse(null);
+                    // 첫 번째 ACCEPTED 참여자 정보 가져오기
+                    GatheringParticipant acceptedParticipant = gatheringParticipantRepository
+                            .findByGathering_Id(gathering.getId())
+                            .stream()
+                            .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
+                            .findFirst()
+                            .orElse(null);
 
-                UserProfile partner = acceptedParticipant != null ? acceptedParticipant.getUser() : null;
+                    UserProfile partner = acceptedParticipant != null ? acceptedParticipant.getUser() : null;
 
-                result.add(MatchHistoryResponse.builder()
-                        .id(gathering.getId())
-                        .type("GATHERING")
-                        .status("COMPLETED")
-                        .role("HOST")
-                        .partnerName(partner != null ? partner.getName() : null)
-                        .partnerProfileImageUrl(partner != null ? partner.getProfileImageUrl() : null)
-                        .partnerDepartment(partner != null ? partner.getDepartment() : null)
-                        .partnerStudentNumber(partner != null ? partner.getStudentId() : null)
-                        .location(gathering.getVenue())
-                        .sportType(gathering.getSportType())
-                        .scheduledAt(gathering.getScheduledAt() != null ?
-                                gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
-                        .reviewed(reviewed)
-                        .build());
+                    Long chatRoomId = groupChatRoomRepository.findByGathering_Id(gathering.getId())
+                            .map(room -> room.getId())
+                            .orElse(null);
+
+                    result.add(MatchHistoryResponse.builder()
+                            .id(gathering.getId())
+                            .type("GATHERING")
+                            .status("COMPLETED")
+                            .role("HOST")
+                            .partnerName(partner != null ? partner.getName() : null)
+                            .partnerProfileImageUrl(partner != null ? partner.getProfileImageUrl() : null)
+                            .partnerDepartment(partner != null ? partner.getDepartment() : null)
+                            .partnerStudentNumber(partner != null ? partner.getStudentId() : null)
+                            .location(gathering.getVenue())
+                            .sportType(gathering.getSportType())
+                            .scheduledAt(gathering.getScheduledAt() != null ?
+                                    gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
+                            .reviewed(reviewed)
+                            .chatRoomId(chatRoomId)
+                            .partnerUserId(null)
+                            .build());
                 });
 
         // 3. 일반 모집 완료 내역 (참여자, 본인이 HOST인 경우 제외)
@@ -188,6 +202,10 @@ public class ActiveMatchService {
                     UserProfile host = gathering.getHost();
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
+
+                    Long chatRoomId = groupChatRoomRepository.findByGathering_Id(gathering.getId())
+                            .map(room -> room.getId())
+                            .orElse(null);
 
                     result.add(MatchHistoryResponse.builder()
                             .id(gathering.getId())
@@ -203,6 +221,8 @@ public class ActiveMatchService {
                             .scheduledAt(gathering.getScheduledAt() != null ?
                                 gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
                             .reviewed(reviewed)
+                            .chatRoomId(chatRoomId)
+                            .partnerUserId(null)
                             .build());
                 });
 

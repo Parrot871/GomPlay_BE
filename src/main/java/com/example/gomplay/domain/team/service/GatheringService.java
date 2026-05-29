@@ -2,6 +2,8 @@ package com.example.gomplay.domain.team.service;
 
 import com.example.gomplay.domain.team.dto.GatheringUpdateRequest;
 import com.example.gomplay.domain.team.dto.GatheringUpdateResponse;
+import com.example.gomplay.domain.team.dto.ReviewableParticipantResponse;
+import com.example.gomplay.domain.review.repository.ReviewRepository;
 import com.example.gomplay.domain.auth.entity.AuthUser;
 import com.example.gomplay.domain.auth.repository.AuthUserRepository;
 import com.example.gomplay.domain.point.service.PointService;
@@ -501,4 +503,51 @@ public class GatheringService {
                 .map(GatheringParticipantResponse::new)
                 .collect(Collectors.toList());
         }
+
+        // reviewable 참여자 목록 조회
+        @Transactional(readOnly = true)
+        public List<ReviewableParticipantResponse> getReviewableParticipants(Long userId, Long gatheringId) {
+                UserProfile me = userProfileRepository.findByAuthUser_Id(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+                Gathering gathering = gatheringRepository.findById(gatheringId)
+                        .orElseThrow(() -> new IllegalArgumentException("모집글을 찾을 수 없습니다."));
+
+                List<ReviewableParticipantResponse> result = new java.util.ArrayList<>();
+
+                // 방장 추가 (본인 제외)
+                UserProfile host = gathering.getHost();
+                if (!host.getId().equals(me.getId())) {
+                        boolean reviewed = reviewRepository.existsByReviewer_IdAndReviewee_IdAndGatheringId(
+                                me.getId(), host.getId(), gatheringId);
+                        result.add(ReviewableParticipantResponse.of(
+                                host.getAuthUser().getId(),
+                                host.getName(),
+                                host.getProfileImageUrl(),
+                                host.getDepartment(),
+                                host.getStudentId(),
+                                reviewed
+                        ));
+                }
+
+                // ACCEPTED 참여자 추가 (본인 제외)
+                gatheringParticipantRepository.findByGathering_Id(gatheringId)
+                        .stream()
+                        .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
+                        .filter(p -> !p.getUser().getId().equals(me.getId()))
+                        .forEach(p -> {
+                                boolean reviewed = reviewRepository.existsByReviewer_IdAndReviewee_IdAndGatheringId(
+                                        me.getId(), p.getUser().getId(), gatheringId);
+                                result.add(ReviewableParticipantResponse.of(
+                                        p.getUser().getAuthUser().getId(),
+                                        p.getUser().getName(),
+                                        p.getUser().getProfileImageUrl(),
+                                        p.getUser().getDepartment(),
+                                        p.getUser().getStudentId(),
+                                        reviewed
+                                ));
+                        });
+
+                return result;
+                }
 }

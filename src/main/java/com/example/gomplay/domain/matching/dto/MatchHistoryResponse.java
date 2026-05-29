@@ -19,4 +19,6 @@ public class MatchHistoryResponse {
     private String scheduledAt;
     private String matchedAt;
     private boolean reviewed;
+    private Long chatRoomId;
+    private Long partnerUserId;
 }

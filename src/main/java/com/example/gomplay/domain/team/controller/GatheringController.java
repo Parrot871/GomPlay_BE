@@ -3,6 +3,7 @@ package com.example.gomplay.domain.team.controller;
 
 import com.example.gomplay.domain.team.dto.GatheringUpdateRequest;
 import com.example.gomplay.domain.team.dto.GatheringUpdateResponse;
+import com.example.gomplay.domain.team.dto.ReviewableParticipantResponse;
 import com.example.gomplay.domain.team.dto.GatheringCreateRequest;
 import com.example.gomplay.domain.team.dto.GatheringCreateResponse;
 import com.example.gomplay.domain.team.dto.GatheringJoinResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import com.example.gomplay.domain.team.dto.GatheringListResponse;
 import com.example.gomplay.domain.team.dto.GatheringParticipantResponse;
 import com.example.gomplay.domain.team.dto.GatheringRecommendResponse;
+
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -127,6 +129,13 @@ public class GatheringController {
         @AuthenticationPrincipal Long userId,
         @PathVariable Long gatheringId) {
     return ResponseEntity.ok(gatheringService.getParticipants(userId, gatheringId));
+    }
+
+    @GetMapping("/{gatheringId}/participants/reviewable")
+    public ResponseEntity<List<ReviewableParticipantResponse>> getReviewableParticipants(
+        @AuthenticationPrincipal Long userId,
+        @PathVariable Long gatheringId) {
+    return ResponseEntity.ok(gatheringService.getReviewableParticipants(userId, gatheringId));
     }
 
 }
