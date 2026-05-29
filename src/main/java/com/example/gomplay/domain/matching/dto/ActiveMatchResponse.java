@@ -31,20 +31,20 @@ public class ActiveMatchResponse {
     private long pendingCount;
     private boolean reviewed;
     private boolean canComplete;
+    private String canCompleteReason;
 
     private static final DateTimeFormatter FORMATTER =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-            .withZone(ZoneId.of("Asia/Seoul"));
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+                    .withZone(ZoneId.of("Asia/Seoul"));
 
     private static String toZonedString(LocalDateTime dt) {
         if (dt == null) return null;
         return dt.atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER);
     }
 
-    // GATHERING용 (HOST / ACCEPTED GUEST 공통)
     public static ActiveMatchResponse ofGathering(
             Gathering gathering, UserProfile me, UserProfile partner,
-            long pendingCount, boolean reviewed) {
+            long pendingCount, boolean reviewed, boolean iCompleted) {
 
         boolean isHost = gathering.getHost().getId().equals(me.getId());
 
@@ -70,13 +70,24 @@ public class ActiveMatchResponse {
         res.matchedAt = null;
         res.pendingCount = pendingCount;
         res.reviewed = reviewed;
-        res.canComplete = gathering.getScheduledEndAt() != null
-                && gathering.getScheduledEndAt().isBefore(LocalDateTime.now())
-                && gathering.getStatus() == Gathering.Status.OPEN;
+
+        boolean afterEnd = gathering.getScheduledEndAt() != null
+                && gathering.getScheduledEndAt().isBefore(LocalDateTime.now());
+
+        if (!afterEnd) {
+            res.canComplete = false;
+            res.canCompleteReason = "NOT_STARTED";
+        } else if (iCompleted) {
+            res.canComplete = false;
+            res.canCompleteReason = "ALREADY_REQUESTED";
+        } else {
+            res.canComplete = true;
+            res.canCompleteReason = "AVAILABLE";
+        }
+
         return res;
     }
 
-    // GATHERING PENDING 신청자용
     public static ActiveMatchResponse ofGatheringPending(
             Gathering gathering, UserProfile me, UserProfile host, boolean reviewed) {
 
@@ -100,10 +111,10 @@ public class ActiveMatchResponse {
         res.pendingCount = 0L;
         res.reviewed = reviewed;
         res.canComplete = false;
+        res.canCompleteReason = "NOT_STARTED";
         return res;
     }
 
-    // PARTNER용
     public static ActiveMatchResponse ofPartner(
             MatchResult matchResult, UserProfile me, UserProfile partner,
             ChatRoom chatRoom, boolean reviewed) {
@@ -127,8 +138,15 @@ public class ActiveMatchResponse {
         res.matchedAt = toZonedString(matchResult.getCreatedAt());
         res.pendingCount = 0;
         res.reviewed = reviewed;
-        res.canComplete = matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS
-                && matchResult.getCreatedAt().plusSeconds(10).isBefore(LocalDateTime.now());
+
+        boolean iCompleted = matchResult.getUserA().getId().equals(me.getId())
+                ? matchResult.isUserACompleted()
+                : matchResult.isUserBCompleted();
+
+        res.canComplete = !iCompleted
+                && matchResult.getStatus() == MatchResult.MatchResultStatus.IN_PROGRESS;
+        res.canCompleteReason = iCompleted ? "ALREADY_REQUESTED" : "AVAILABLE";
+
         return res;
     }
 

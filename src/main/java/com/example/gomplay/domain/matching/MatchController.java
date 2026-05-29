@@ -3,6 +3,7 @@ package com.example.gomplay.domain.matching;
 import com.example.gomplay.domain.matching.dto.ActiveMatchResponse;
 import com.example.gomplay.domain.matching.dto.MatchHistoryResponse;
 import com.example.gomplay.domain.matching.service.ActiveMatchService;
+import com.example.gomplay.domain.matching.service.MatchCompleteService;
 import com.example.gomplay.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.List;
 public class MatchController {
 
     private final ActiveMatchService activeMatchService;
+    private final MatchCompleteService matchCompleteService;
 
     @GetMapping("/active")
     public ResponseEntity<ApiResponse<List<ActiveMatchResponse>>> getActiveMatches(
@@ -34,5 +36,14 @@ public class MatchController {
             "매칭 히스토리 조회 성공",
             activeMatchService.getMatchHistory(userId)
         ));
+    }
+
+    @PatchMapping("/{matchId}/complete")
+    public ResponseEntity<ApiResponse<Void>> completeMatch(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long matchId,
+            @RequestParam String type) {
+        matchCompleteService.completeMatch(userId, matchId, type);
+        return ResponseEntity.ok(ApiResponse.success("완료 처리 성공", null));
     }
 }
