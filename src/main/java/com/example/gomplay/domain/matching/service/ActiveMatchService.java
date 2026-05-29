@@ -70,7 +70,6 @@ public class ActiveMatchService {
                             .findByGathering_IdAndUser_Id(gathering.getId(), me.getId())
                             .map(GatheringParticipant::isCompleted)
                             .orElse(false);
-
                     result.add(ActiveMatchResponse.ofGathering(gathering, me, partner, pendingCount, reviewed, iCompleted));
                 });
 
@@ -86,7 +85,6 @@ public class ActiveMatchService {
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
                     boolean iCompleted = participant.isCompleted();
-
                     result.add(ActiveMatchResponse.ofGathering(gathering, me, gathering.getHost(), pendingCount, reviewed, iCompleted));
                 });
 
