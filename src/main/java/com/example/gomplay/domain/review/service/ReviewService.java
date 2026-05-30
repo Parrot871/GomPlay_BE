@@ -42,10 +42,11 @@ public class ReviewService {
         // 중복 평가 방지
         if (request.getMatchResultId() != null &&
             reviewRepository.existsByReviewer_IdAndMatchResultId(reviewer.getId(), request.getMatchResultId())) {
-             throw new IllegalArgumentException("이미 평가한 매칭입니다.");
+            throw new IllegalArgumentException("이미 평가한 매칭입니다.");
         }
         if (request.getGatheringId() != null &&
-            reviewRepository.existsByReviewer_IdAndGatheringId(reviewer.getId(), request.getGatheringId())) {
+            reviewRepository.existsByReviewer_IdAndReviewee_IdAndGatheringId(
+                reviewer.getId(), reviewee.getId(), request.getGatheringId())) {
             throw new IllegalArgumentException("이미 평가한 모임입니다.");
         }
 
