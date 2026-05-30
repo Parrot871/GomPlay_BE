@@ -99,9 +99,6 @@ public class Gathering {
         this.boostExpiredAt = expiredAt;
     }
 
-    @Column(name = "open_chat_url")
-    private String openChatUrl;
-
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -118,7 +115,7 @@ public class Gathering {
     public void update(String title, String sportType, String difficulty,
                    String venue, BigDecimal venueLat, BigDecimal venueLng,
                    LocalDateTime scheduledAt, LocalDateTime scheduledEndAt,
-                   Integer maxParticipants, String description, String tags, String status, String openChatUrl) {
+                   Integer maxParticipants, String description, String tags, String status) {
     if (title != null) this.title = title;
     if (sportType != null) this.sportType = sportType;
     if (difficulty != null) this.difficulty = difficulty;
@@ -131,11 +128,5 @@ public class Gathering {
     if (description != null) this.description = description;
     if (tags != null) this.tags = tags;
     if (status != null) this.status = Status.valueOf(status);
-    if (openChatUrl != null) {
-    if (!openChatUrl.startsWith("https://open.kakao.com/o/")) {
-        throw new IllegalArgumentException("카카오 오픈채팅 링크를 올바르게 입력해주세요.");
-    }
-    this.openChatUrl = openChatUrl;
-    }
     }  
 }

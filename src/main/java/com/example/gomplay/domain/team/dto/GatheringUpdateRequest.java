@@ -20,5 +20,4 @@ public class GatheringUpdateRequest {
     private String description;
     private String tags;
     private String status;
-    private String openChatUrl;
 }

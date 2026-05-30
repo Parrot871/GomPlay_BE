@@ -19,7 +19,6 @@ public class GatheringCreateResponse {
     private String description;
     private LocalDateTime scheduledEndAt;
     private String tags;
-    private String openChatUrl;
 
     public GatheringCreateResponse(Gathering gathering) {
         this.id = gathering.getId();
@@ -32,6 +31,5 @@ public class GatheringCreateResponse {
         this.currentParticipants = gathering.getCurrentParticipants();
         this.status = gathering.getStatus().name();
         this.createdAt = gathering.getCreatedAt();
-        this.openChatUrl = gathering.getOpenChatUrl();
     }
 }

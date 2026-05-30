@@ -70,11 +70,6 @@ public class GatheringService {
         UserProfile host = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-        if (request.getOpenChatUrl() == null || !request.getOpenChatUrl().startsWith("https://open.kakao.com/o/")) {
-                throw new IllegalArgumentException("카카오 오픈채팅 링크를 입력해주세요. (https://open.kakao.com/o/로 시작해야 합니다.)");
-        }
-
-
         Gathering gathering = Gathering.builder()
                 .host(host)
                 .title(request.getTitle())
@@ -88,7 +83,6 @@ public class GatheringService {
                 .maxParticipants(request.getMaxParticipants())
                 .description(request.getDescription())
                 .tags(request.getTags())
-                .openChatUrl(request.getOpenChatUrl())
                 .build();
 
         Gathering saved = gatheringRepository.save(gathering);
@@ -130,8 +124,7 @@ public class GatheringService {
                 request.getMaxParticipants(),
                 request.getDescription(),
                 request.getTags(),
-                request.getStatus(),
-                request.getOpenChatUrl()
+                request.getStatus()
         );
 
         return new GatheringUpdateResponse(gathering);
@@ -345,8 +338,8 @@ public class GatheringService {
         return new GatheringParticipantResponse(participant);
     }
 
-    @Transactional
-    public void completeGathering(Long userId, Long gatheringId) {
+   @Transactional
+   public void completeGathering(Long userId, Long gatheringId) {
         UserProfile user = userProfileRepository.findByAuthUser_Id(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
@@ -369,6 +362,7 @@ public class GatheringService {
         boolean allParticipantsCompleted = gatheringParticipantRepository
                 .findByGathering_Id(gatheringId)
                 .stream()
+                .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
                 .allMatch(GatheringParticipant::isCompleted);
 
         if (hostCompleted && allParticipantsCompleted) {
@@ -391,50 +385,51 @@ public class GatheringService {
 
                 // 방장에게 알림
                 notificationService.createNotification(
-                gathering.getHost(),
-                Notification.NotificationType.review_available,
-                "평가 가능",
-                "'" + gathering.getTitle() + "' 운동이 완료됐어요! 상대방을 평가해보세요.",
-                gatheringId
+                        gathering.getHost(),
+                        Notification.NotificationType.review_available,
+                        "평가 가능",
+                        "'" + gathering.getTitle() + "' 운동이 완료됐어요! 상대방을 평가해보세요.",
+                        gatheringId
                 );
 
                 // 참여자들에게 알림
                 participants.forEach(p -> notificationService.createNotification(
-                p.getUser(),
-                Notification.NotificationType.review_available,
-                "평가 가능",
-                "'" + gathering.getTitle() + "' 운동이 완료됐어요! 상대방을 평가해보세요.",
-                gatheringId
+                        p.getUser(),
+                        Notification.NotificationType.review_available,
+                        "평가 가능",
+                        "'" + gathering.getTitle() + "' 운동이 완료됐어요! 상대방을 평가해보세요.",
+                        gatheringId
                 ));
 
         } else {
                 // 한쪽만 완료 버튼 눌렀을 때 → match_end_confirm 알림
                 // 방장이 눌렀으면 참여자들에게, 참여자가 눌렀으면 방장에게
                 if (gathering.getHost().getId().equals(user.getId())) {
-                // 참여자들에게 알림
-                gatheringParticipantRepository.findByGathering_Id(gatheringId)
-                        .forEach(p -> notificationService.createNotification(
-                        p.getUser(),
-                        Notification.NotificationType.match_end_confirm,
-                        "매칭 종료 대기",
-                        "'" + gathering.getTitle() + "' 방장이 운동 완료를 눌렀어요! 확인해주세요.",
-                        gatheringId
-                        ));
+                        // 참여자들에게 알림
+                        gatheringParticipantRepository.findByGathering_Id(gatheringId)
+                                .forEach(p -> notificationService.createNotification(
+                                p.getUser(),
+                                Notification.NotificationType.match_end_confirm,
+                                "매칭 종료 대기",
+                                "'" + gathering.getTitle() + "' 방장이 운동 완료를 눌렀어요! 확인해주세요.",
+                                gatheringId
+                                ));
                 } else {
-                // 방장에게 알림
-                notificationService.createNotification(
-                        gathering.getHost(),
-                        Notification.NotificationType.match_end_confirm,
-                        "매칭 종료 대기",
-                        user.getName() + "님이 운동 완료를 눌렀어요! 확인해주세요.",
-                        gatheringId
-                );
+                        // 방장에게 알림
+                        notificationService.createNotification(
+                                gathering.getHost(),
+                                Notification.NotificationType.match_end_confirm,
+                                "매칭 종료 대기",
+                                user.getName() + "님이 운동 완료를 눌렀어요! 확인해주세요.",
+                                gatheringId
+                        );
                 }
         }
 
         // 개인 완료 시 +4p 지급
         pointService.addPoint(user, 4, "exercise_complete", null);
         }
+
 
         @Transactional(readOnly = true)
         public List<GatheringHistoryResponse> getGatheringHistory(Long userId) {

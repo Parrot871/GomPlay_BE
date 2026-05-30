@@ -18,7 +18,6 @@ public class GatheringUpdateResponse {
     private String description;
     private String tags;
     private String status;
-    private String openChatUrl;
     private LocalDateTime updatedAt;
 
     public GatheringUpdateResponse(Gathering gathering) {
@@ -35,6 +34,5 @@ public class GatheringUpdateResponse {
         this.tags = gathering.getTags();
         this.status = gathering.getStatus().name();
         this.updatedAt = gathering.getUpdatedAt();
-        this.openChatUrl = gathering.getOpenChatUrl();
     }
 }

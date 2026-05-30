@@ -26,7 +26,6 @@ public class GatheringDetailResponse {
     private String createdAt;
     private String hostName;
     private String hostProfileImageUrl;
-    private String openChatUrl;
 
     private static final DateTimeFormatter FORMATTER =
         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
@@ -54,6 +53,5 @@ public class GatheringDetailResponse {
             gathering.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null;
         this.hostName = gathering.getHost().getName();
         this.hostProfileImageUrl = gathering.getHost().getProfileImageUrl();
-        this.openChatUrl = gathering.getOpenChatUrl();
     }
 }
