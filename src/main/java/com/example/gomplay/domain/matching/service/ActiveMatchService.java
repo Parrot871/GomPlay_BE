@@ -37,8 +37,8 @@ public class ActiveMatchService {
     private final GroupChatRoomRepository groupChatRoomRepository;
 
     private static final DateTimeFormatter FORMATTER =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
-            .withZone(ZoneId.of("Asia/Seoul"));
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+                    .withZone(ZoneId.of("Asia/Seoul"));
 
     @Transactional(readOnly = true)
     public List<ActiveMatchResponse> getActiveMatches(Long userId) {
@@ -56,6 +56,7 @@ public class ActiveMatchService {
                             .findByGathering_Id(gathering.getId())
                             .stream()
                             .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
+                            .filter(p -> !p.getUser().getId().equals(me.getId()))
                             .findFirst()
                             .orElse(null);
 
@@ -65,8 +66,10 @@ public class ActiveMatchService {
                             .countByGathering_IdAndStatus(gathering.getId(), GatheringParticipant.Status.PENDING);
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
-
-                    boolean iCompleted = gathering.isHostCompleted();
+                    boolean iCompleted = gatheringParticipantRepository
+                            .findByGathering_IdAndUser_Id(gathering.getId(), me.getId())
+                            .map(GatheringParticipant::isCompleted)
+                            .orElse(false);
                     result.add(ActiveMatchResponse.ofGathering(gathering, me, partner, pendingCount, reviewed, iCompleted));
                 });
 
@@ -81,8 +84,7 @@ public class ActiveMatchService {
                             .countByGathering_IdAndStatus(gathering.getId(), GatheringParticipant.Status.PENDING);
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
-
-                    boolean iCompleted = participant.isCompleted();    
+                    boolean iCompleted = participant.isCompleted();
                     result.add(ActiveMatchResponse.ofGathering(gathering, me, gathering.getHost(), pendingCount, reviewed, iCompleted));
                 });
 
@@ -148,7 +150,7 @@ public class ActiveMatchService {
                             .partnerDepartment(partner.getDepartment())
                             .partnerStudentNumber(partner.getStudentId())
                             .matchedAt(matchResult.getCreatedAt() != null ?
-                                matchResult.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
+                                    matchResult.getCreatedAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
                             .reviewed(reviewed)
                             .chatRoomId(chatRoomId)
                             .partnerUserId(partner.getAuthUser().getId())
@@ -161,11 +163,11 @@ public class ActiveMatchService {
                     boolean reviewed = reviewRepository
                             .existsByReviewer_IdAndGatheringId(me.getId(), gathering.getId());
 
-                    // 첫 번째 ACCEPTED 참여자 정보 가져오기
                     GatheringParticipant acceptedParticipant = gatheringParticipantRepository
                             .findByGathering_Id(gathering.getId())
                             .stream()
                             .filter(p -> p.getStatus() == GatheringParticipant.Status.ACCEPTED)
+                            .filter(p -> !p.getUser().getId().equals(me.getId()))
                             .findFirst()
                             .orElse(null);
 
@@ -221,7 +223,7 @@ public class ActiveMatchService {
                             .location(gathering.getVenue())
                             .sportType(gathering.getSportType())
                             .scheduledAt(gathering.getScheduledAt() != null ?
-                                gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
+                                    gathering.getScheduledAt().atZone(ZoneId.of("Asia/Seoul")).format(FORMATTER) : null)
                             .reviewed(reviewed)
                             .chatRoomId(chatRoomId)
                             .partnerUserId(null)
