@@ -27,7 +27,7 @@ public class Report {
     private UserProfile reportee;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gathering_id", nullable = false)
+    @JoinColumn(name = "gathering_id", nullable = true)
     private Gathering gathering;
 
     @Column(name = "reason", nullable = false)

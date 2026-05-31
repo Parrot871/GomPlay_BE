@@ -14,6 +14,7 @@ import com.example.gomplay.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.gomplay.domain.team.repository.GatheringRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class ReviewService {
     private final ReportRepository reportRepository;
     private final PointService pointService;
     private final NotificationService notificationService;
-
+    private final GatheringRepository gatheringRepository;
     // 평가 제출
     @Transactional
     public ReviewResponse submitReview(Long userId, ReviewRequest request) {
@@ -145,12 +146,13 @@ public class ReviewService {
                 reason += " - " + request.getReportContent();
             }
 
-            Report report = Report.builder()
-                    .reporter(reviewer)
-                    .reportee(reviewee)
-                    .gathering(null)
-                    .reason(reason)
-                    .build();
+        Report report = Report.builder()
+                .reporter(reviewer)
+                .reportee(reviewee)
+                .gathering(request.getGatheringId() != null ?
+                    gatheringRepository.findById(request.getGatheringId()).orElse(null) : null)
+                .reason(reason)
+                .build();
 
             reportRepository.save(report);
         }
