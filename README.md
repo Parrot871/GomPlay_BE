@@ -71,7 +71,39 @@
 
 &nbsp;
 ## 🏗️ 시스템 아키텍처
-## 🏗️ CI/CD 파이프라인
-## 📂 프로젝트 구조
+<img width="1132" height="471" alt="image" src="https://github.com/user-attachments/assets/cfc47d8b-7cba-487a-97cd-f3f82dad1118" />
 
+
+## 🏗️ CI/CD 파이프라인
+<img width="1132" height="471" alt="image" src="https://github.com/user-attachments/assets/094689f3-eed2-4a7a-a528-8226d18884fb" />
+
+
+## 📂 프로젝트 구조
+```
+src/main/java/com/example/gomplay
+├── domain
+│   ├── auth          # 인증 (JWT, 이메일 인증)
+│   ├── user          # 사용자 프로필
+│   ├── survey        # 운동 성향 설문
+│   ├── matching      # 퀵 매칭
+│   ├── team          # 운동 모집
+│   ├── chat          # 1:1 채팅
+│   ├── groupchat     # 그룹 채팅
+│   ├── notification  # 알림
+│   ├── review        # 평가
+│   ├── report        # 신고
+│   ├── point         # 포인트
+│   └── attendance    # 출석 체크
+├── global
+│   ├── common        # 공통 응답 객체
+│   ├── config        # 설정 (Security, WebSocket 등)
+│   ├── exception     # 예외 처리
+│   ├── filter        # JWT 인증
+│   ├── mail          # 이메일 발송
+│   ├── places        # Google Places API 연동
+│   ├── s3            # AWS S3 파일 관리
+│   ├── util          # 유틸리티
+│   └── websocket     # WebSocket 설정 및 실시간 메시지 처리
+└── GomplayApplication.java
+```
 
