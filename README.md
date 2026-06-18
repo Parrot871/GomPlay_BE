@@ -75,6 +75,7 @@
 
 
 ## 🏗️ CI/CD 파이프라인
+<img width="978" height="186" alt="image" src="https://github.com/user-attachments/assets/cddc8d01-b84f-4845-ad3d-458935ee54ed" />
 
 
 ## 📂 프로젝트 구조
