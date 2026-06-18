@@ -75,7 +75,6 @@
 
 
 ## 🏗️ CI/CD 파이프라인
-<img width="1132" height="471" alt="image" src="https://github.com/user-attachments/assets/094689f3-eed2-4a7a-a528-8226d18884fb" />
 
 
 ## 📂 프로젝트 구조
@@ -106,4 +105,52 @@ src/main/java/com/example/gomplay
 │   └── websocket     # WebSocket 설정 및 실시간 메시지 처리
 └── GomplayApplication.java
 ```
+
+## ⚙️ 로컬 실행 방법
+
+### 사전 요구사항
+- Java 21
+- Docker & Docker Compose
+- MySQL
+
+### 환경변수 설정
+```bash
+DB_URL=jdbc:mysql://localhost:3306/gomplay
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+JWT_SECRET=your_jwt_secret
+AWS_ACCESS_KEY=your_access_key
+AWS_SECRET_KEY=your_secret_key
+S3_BUCKET=your_bucket_name
+GROQ_API_KEY=your_groq_api_key
+GOOGLE_PLACES_API_KEY=your_google_api_key
+```
+
+### 실행
+```bash
+git clone https://github.com/Parrot871/GomPlay_BE.git
+cd gomplay-backend
+docker-compose up -d
+./gradlew bootRun
+```
+
+<br>
+
+## 🗄 ERD
+
+<br>
+
+## 📈 확장 계획
+
+- 비매너 행위 신고 백오피스 시스템 연동
+- 단국대학교 → 전국 대학생 단위로 서비스 확장
+- 공강 시간대 기반 매칭 → 시간대 및 거리 기반 매칭으로 확장
+
+<br>
+
+## 🔗 관련 레포지토리
+
+| 레포 | 링크 |
+|:----:|:----:|
+| Frontend | [gomplay-frontend](https://github.com/RARARK/gomplay-frontend) |
 
