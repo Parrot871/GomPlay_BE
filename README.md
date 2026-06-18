@@ -137,6 +137,7 @@ docker-compose up -d
 <br>
 
 ## 🗄 ERD
+<img width="1719" height="1285" alt="image" src="https://github.com/user-attachments/assets/c9b621bf-f68c-4802-8e1a-a3fb736f1e80" />
 
 <br>
 
